@@ -1,0 +1,24 @@
+= microtoml(3)
+:author: Francisco Oliveto
+:doctype: manpage
+:date: 06 August 2022
+:email: franciscoliveto@gmail.com.
+:keywords: microtoml
+:release-version: 1.0
+:manmanual: Microtoml Manual.
+:mansource: Microtoml {release-version}
+
+== NAME
+
+microtoml - parse of TOML to fixed-extent C structures
+
+== FUNCTIONS
+
+== DESCRIPTION
+
+== RETURN VALUE
+
+== COPYING
+
+Copyright (c) 2022 {author}.
+SPDX-License-Identifier: BSD-2-clause.

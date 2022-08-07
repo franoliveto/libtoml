@@ -3,3 +3,6 @@
 microtoml is a tiny TOML parser that uses only fixed-extent storage.
 
 microtoml is intended for use in constrained environments.
+
+To be built, it requires make, a C compiler, and asciidoctor to
+format the documentation.

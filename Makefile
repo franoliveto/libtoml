@@ -7,24 +7,29 @@ DEBUG = -O2
 #DEBUG = -g
 CFLAGS = $(DEBUG) -Wall -Werror
 
-OFILES = microtoml.o
 
-all: mtoml.1
+all: test1 mtoml.3
 
+test1: test1.o mtoml.o
+	$(CC) $(CFLAGS) -o test1 test1.o mtoml.o
 
-mtoml.1: mtoml.adoc
+test1.o:
+mtoml.o: mtoml.h
+
+mtoml.3: mtoml.adoc
 	asciidoctor -b manpage $<
 
 
 .PHONY: clean
 clean:
-	rm -f *.o microtoml-*.tar.gz mtoml.1
+	rm -f *.o *.3 test[12]
+	rm -f microtoml-*.tar.gz
 
 version:
 	@echo $(VERSION)
 
 
-SOURCES = Makefile 
+SOURCES = Makefile *.[ch] test[12].toml
 DOCS = COPYING NEWS README.adoc mtoml.adoc
 ALL = $(SOURCES) $(DOCS)
 

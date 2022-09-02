@@ -1,0 +1,6 @@
+# This is a configuration file.
+
+device = "/dev/spidev0.0"
+count = 4 # this is a comment
+flag = true
+speed = 76.213

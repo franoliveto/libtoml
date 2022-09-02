@@ -1,4 +1,4 @@
-= microtoml(3)
+= mtoml(3)
 :author: Francisco Oliveto
 :doctype: manpage
 :date: 06 August 2022
@@ -10,7 +10,7 @@
 
 == NAME
 
-microtoml - parse of TOML to fixed-extent C structures
+mtoml - parse of TOML to fixed-extent C structures
 
 == FUNCTIONS
 

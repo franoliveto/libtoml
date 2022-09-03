@@ -102,7 +102,7 @@ static int scan(char *buf, size_t size, FILE *fp)
             return COMMA;
         case '.':
             return DOT;
-        default: /* [0-9][a-z][A-Z][+-_."] */
+        default: /* [0-9a-zA-Z+-_."] */
             return scan_word(buf, size, c, fp);
         }
     }

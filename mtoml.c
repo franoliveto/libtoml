@@ -109,7 +109,7 @@ static int scan(char *buf, size_t size, FILE *fp)
     return -1;
 }
 
-static char *target_address(const struct toml_keys_t *cursor)
+static char *target_address(const struct toml_key_t *cursor)
 {
     char *addr = NULL;
     switch (cursor->type) {
@@ -145,21 +145,49 @@ static char *target_address(const struct toml_keys_t *cursor)
     return addr;
 }
 
-int toml_load(FILE *fp, const struct toml_keys_t *keys)
+int toml_load(FILE *fp, const struct toml_key_t *keys)
 {
     char tokbuf[128];
     int tok;
-    const struct toml_keys_t *cursor;
+    const struct toml_key_t *cursor;
+    const struct toml_key_t *curtab = keys;
     size_t maxlen = 0;
     char *valp;
 
     while ((tok = scan(tokbuf, sizeof(tokbuf), fp)) != -1) {
         switch (tok) {
-        case LBRACKET: /* [ x.y.z ] or [[ x.y.z ]] */
+        /* TODO: [ x.y.z ] or [[ x.y.z ]] */
+        case LBRACKET: /* [ x ] */
+            tok = scan(tokbuf, sizeof(tokbuf), fp);
+            if (tok != WORD) {
+                fprintf(stderr, "Invalid syntax\n");
+                return -1;
+            }
+
+            fprintf(stdout, "Collected table name '%s'\n", tokbuf);
+            for (cursor = keys; cursor->key != NULL; cursor++) {
+                if (strcmp(cursor->key, tokbuf) == 0)
+                    break;
+            }
+            if (cursor->key == NULL) {
+                fprintf(stderr, "Unknown table name '%s'\n", tokbuf);
+                return -1;
+            }
+            if (cursor->type != table_t) {
+                fprintf(stderr, "Saw simple value type when expecting "
+                        "a table.\n");
+                return -1;
+            }
+            tok = scan(tokbuf, sizeof(tokbuf), fp);
+            if (tok != RBRACKET) {
+                fprintf(stderr, "Missing ']'\n");
+                return -1;
+            }
+            curtab = cursor->addr.keys;
             break;
         case WORD: /* key/value */
             fprintf(stdout, "Collected key name '%s'\n", tokbuf);
-            for (cursor = keys; cursor->key != NULL; cursor++) {
+            for (cursor = curtab; cursor->key != NULL; cursor++) {
                 if (strcmp(cursor->key, tokbuf) == 0)
                     break;
             }
@@ -253,6 +281,9 @@ int toml_load(FILE *fp, const struct toml_keys_t *keys)
                             memcpy(valp, &tmp, sizeof(double));
                         }
                         break;
+                    case table_t:
+                    default:
+                        ;
                     }
                 break;
             case LBRACKET: /* key = [ ] */
@@ -269,7 +300,6 @@ int toml_load(FILE *fp, const struct toml_keys_t *keys)
             return -1;
         }
     }
-    fprintf(stdout, "TOML parse ends.\n");
     return 0;
 }
 

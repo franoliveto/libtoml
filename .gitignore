@@ -1,4 +1,4 @@
 *.tar.gz
 *.o
 *.3
-test[0-9]
+test_*

@@ -8,28 +8,30 @@ DEBUG = -O2
 CFLAGS = $(DEBUG) -Wall -Werror
 
 
-all: test1 mtoml.3
+all: test_microtoml mtoml.3
 
-test1: test1.o mtoml.o
-	$(CC) $(CFLAGS) -o test1 test1.o mtoml.o
+test_microtoml: test_microtoml.o mtoml.o
+	$(CC) $(CFLAGS) -o test_microtoml test_microtoml.o mtoml.o
 
-test1.o:
 mtoml.o: mtoml.h
+test_microtoml.o:
 
 mtoml.3: mtoml.adoc
 	asciidoctor -b manpage $<
 
+test: test_microtoml
+	./test_microtoml
 
 .PHONY: clean
 clean:
-	rm -f *.o *.3 test[12]
+	rm -f *.o *.3 test_microtoml
 	rm -f microtoml-*.tar.gz
 
 version:
 	@echo $(VERSION)
 
 
-SOURCES = Makefile *.[ch] test[12].toml
+SOURCES = Makefile *.[ch] *.toml 
 DOCS = COPYING NEWS README.adoc mtoml.adoc
 ALL = $(SOURCES) $(DOCS)
 

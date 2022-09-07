@@ -1,0 +1,20 @@
+# This is a configuration file with three tables.
+# The root table is nameless and starts at the beginning of the document
+# and ends right before the first table header. The other two tables have
+# been named "table-0" and "table-1".
+
+type = "SPI"
+device = "/dev/spidev0.0"
+lorawan_public = true
+clksrc = 0
+
+[table-0]
+enable = true
+type = "SX1250"
+freq = 917200000  # frequency in Hz.
+rssi_offset = -215.4
+
+[table-1]
+enable = true
+radio = 0
+if = -200000

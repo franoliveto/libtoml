@@ -14,11 +14,12 @@ enum toml_type {
     short_t,
     ushort_t,
     boolean_t,
-    real_t
+    real_t,
+    table_t
 };
 
-struct toml_keys_t {
-    char *key;
+struct toml_key_t {
+    const char *key;
     enum toml_type type;
     union {
         int *integer;
@@ -30,11 +31,12 @@ struct toml_keys_t {
 	double *real;
         bool *boolean;
         char *string;
+        const struct toml_key_t *keys;
     } addr;
     size_t len;
 };
 
-int toml_load(FILE *fp, const struct toml_keys_t *keys);
+int toml_load(FILE *fp, const struct toml_key_t *keys);
 
 
 #endif /* _MICRO_TOML_H_ */

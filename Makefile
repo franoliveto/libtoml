@@ -2,10 +2,9 @@
 
 VERSION = 0.1
 
-# Use -g to compile the program for debugging.
-DEBUG = -O2
-#DEBUG = -g
-CFLAGS = $(DEBUG) -Wall -Werror
+CFLAGS = -Wall -Werror
+# Add DEBUG_ENABLE for the tracing code
+CFLAGS += -DDEBUG_ENABLE -g
 
 
 all: test_microtoml mtoml.3

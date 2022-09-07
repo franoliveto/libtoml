@@ -18,6 +18,24 @@
 #include <string.h>
 
 
+#ifdef DEBUG_ENABLE
+#include <stdarg.h>
+void trace(const char *fmt, ...)
+{
+    char buf[BUFSIZ];
+    va_list ap;
+    va_start(ap, fmt);
+    vsnprintf(buf, sizeof(buf), fmt, ap);
+    va_end(ap);
+    fputs(buf, stderr);
+}
+
+#define debug_trace(...) trace(__VA_ARGS__)
+#else
+#define debug_trace(...) do {} while (0)
+#endif
+
+
 /* Token types */
 enum {
       LBRACKET, /* '[' */
@@ -44,12 +62,12 @@ static int scan_word(char *buf, size_t size, int c, FILE *fp)
                 return STRING;
             }
             if (valp >= buf + size - 1) {
-                fprintf(stderr, "String value too long.");
+                debug_trace("String value too long.");
                 return -1;
             }
             *valp++ = c;
         }
-        fprintf(stderr, "Saw EOF or '\\n' before '\"'\n");
+        debug_trace("Saw EOF or '\\n' before '\"'\n");
         return -1;
     }
 
@@ -60,7 +78,7 @@ static int scan_word(char *buf, size_t size, int c, FILE *fp)
             (c >= 'A' && c <= 'Z') ||
             (strchr("0123456789+-_.", c) != NULL)) {
             if (valp >= buf + size - 1) {
-                fprintf(stderr, "Token value too long.");
+                debug_trace("Token value too long.");
                 return -1;
             }
             *valp++ = c;
@@ -160,39 +178,39 @@ int toml_load(FILE *fp, const struct toml_key_t *keys)
         case LBRACKET: /* [ x ] */
             tok = scan(tokbuf, sizeof(tokbuf), fp);
             if (tok != WORD) {
-                fprintf(stderr, "Invalid syntax\n");
+                debug_trace("Invalid syntax\n");
                 return -1;
             }
 
-            fprintf(stdout, "Collected table name '%s'\n", tokbuf);
+            debug_trace("Collected table name '%s'\n", tokbuf);
             for (cursor = keys; cursor->key != NULL; cursor++) {
                 if (strcmp(cursor->key, tokbuf) == 0)
                     break;
             }
             if (cursor->key == NULL) {
-                fprintf(stderr, "Unknown table name '%s'\n", tokbuf);
+                debug_trace("Unknown table name '%s'\n", tokbuf);
                 return -1;
             }
             if (cursor->type != table_t) {
-                fprintf(stderr, "Saw simple value type when expecting "
+                debug_trace("Saw simple value type when expecting "
                         "a table.\n");
                 return -1;
             }
             tok = scan(tokbuf, sizeof(tokbuf), fp);
             if (tok != RBRACKET) {
-                fprintf(stderr, "Missing ']'\n");
+                debug_trace("Missing ']'\n");
                 return -1;
             }
             curtab = cursor->addr.keys;
             break;
         case WORD: /* key/value */
-            fprintf(stdout, "Collected key name '%s'\n", tokbuf);
+            debug_trace("Collected key name '%s'\n", tokbuf);
             for (cursor = curtab; cursor->key != NULL; cursor++) {
                 if (strcmp(cursor->key, tokbuf) == 0)
                     break;
             }
             if (cursor->key == NULL) {
-                fprintf(stderr, "Unknown key name '%s'\n", tokbuf);
+                debug_trace("Unknown key name '%s'\n", tokbuf);
                 return -1;
             }
             if (cursor->type == string_t)
@@ -202,7 +220,7 @@ int toml_load(FILE *fp, const struct toml_key_t *keys)
 
             tok = scan(tokbuf, sizeof(tokbuf), fp);
             if (tok != EQUAL) {
-                fprintf(stderr, "Missing '='\n");
+                debug_trace("Missing '='\n");
                 return -1;
             }
 
@@ -210,16 +228,16 @@ int toml_load(FILE *fp, const struct toml_key_t *keys)
             switch (tok) {
             case STRING: /* key = "value" */
             case WORD:
-                fprintf(stdout, "Collected value '%s'\n", tokbuf);
+                debug_trace("Collected value '%s'\n", tokbuf);
                 /* FIXME: validate types */
                 if (tok == STRING && cursor->type != string_t) {
-                    fprintf(stderr, "Saw quoted value when expecting "
-                            "non-string.\n");
+                    debug_trace("Saw quoted value when expecting "
+                                "non-string.\n");
                     return -1;
                 }
                 if (tok != STRING && cursor->type == string_t) {
-                    fprintf(stderr, "Didn't see quoted value when "
-                            "expecting string.\n");
+                    debug_trace("Didn't see quoted value when "
+                                "expecting string.\n");
                     return -1;
                 }
 
@@ -291,12 +309,12 @@ int toml_load(FILE *fp, const struct toml_key_t *keys)
             case LBRACE: /* key = { } */
                 break;
             default:
-                fprintf(stderr, "Invalid syntax\n");
+                debug_trace("Invalid syntax\n");
                 return -1;
             }
             break;
         default:
-            fprintf(stderr, "Invalid syntax\n");
+            debug_trace("Invalid syntax\n");
             return -1;
         }
     }

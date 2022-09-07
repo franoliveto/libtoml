@@ -1,4 +1,4 @@
 *.tar.gz
 *.o
 *.3
-test_*
+test_microtoml

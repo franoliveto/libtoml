@@ -1,8 +1,23 @@
 == microtoml
 
-microtoml is a tiny TOML parser that uses only fixed-extent storage.
+microtoml is a tiny TOML parser that uses only fixed-extent storage, and
+is intended for use in constrained environments.
 
-microtoml is intended for use in constrained environments.
+It is a plaything and a work in progress. It is not even yet compliant with
+TOML v0.1.0.
 
 To be built, it requires make, a C compiler, and asciidoctor to
 format the documentation.
+
+Building is straightforward. Simply, run:
+
+```
+make
+```
+
+To run the tests:
+
+```
+make test
+```
+

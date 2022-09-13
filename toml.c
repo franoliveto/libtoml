@@ -53,7 +53,7 @@ enum {
 };
 
 
-/* Scans for WORD/STRING tokens that contain any of [0-9][a-z][A-Z][+-_."] */
+/* Scans for WORD/STRING tokens that contain any of [0-9a-zA-Z+-_."] */
 static int scan_word(char *buf, size_t size, int c, FILE *fp)
 {
     char *valp = buf;

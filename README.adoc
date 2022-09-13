@@ -13,7 +13,8 @@ locations specified in the template structures.
 The dialect it parses has some limitations. First, only ASCII encoded
 files are considered to be valid TOML documents. Second, all elements
 of an array must be of the same type. Third, arrays may not be array
-elements.
+elements. Fourth, large numbers may not use underscores to between
+digits.
 
 To be built, it requires make, a C compiler, and asciidoctor to
 format the documentation.
@@ -34,6 +35,9 @@ make test
 
 We need help implementing the following features:
 
+* Multi-line basic strings.
+* Literal strings.
+* Multi-line literal strings.
 * Inline tables.
 * Date-Time type.
 * Escape characters.

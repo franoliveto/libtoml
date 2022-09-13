@@ -15,7 +15,18 @@ enum toml_type {
     ushort_t,
     boolean_t,
     real_t,
+    array_t,
     table_t
+};
+
+struct toml_array_t {
+    enum toml_type type;
+    union {
+        int *integers;
+        double *reals;
+    } store;
+    int *count;
+    int maxlen;
 };
 
 struct toml_key_t {
@@ -32,6 +43,7 @@ struct toml_key_t {
         bool *boolean;
         char *string;
         const struct toml_key_t *keys;
+        const struct toml_array_t array;
     } addr;
     size_t len;
 };

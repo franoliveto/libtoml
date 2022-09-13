@@ -9,13 +9,16 @@
   keyN = valueN(EOF)
 */
 
-#include "mtoml.h"
+#include "toml.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <ctype.h>
 #include <string.h>
+#include <errno.h>
+#include <limits.h>
+#include <math.h> /* HUGE_VAL */
 
 
 #ifdef DEBUG_ENABLE
@@ -163,86 +166,135 @@ static char *target_address(const struct toml_key_t *cursor)
     return addr;
 }
 
-int toml_load(FILE *fp, const struct toml_key_t *keys)
+/* Parses arrays of elements. */
+static int load_array(FILE *fp, const struct toml_array_t *array)
+{
+    int tok, offset = 0;
+    char tokbuf[128];
+
+    while ((tok = scan(tokbuf, sizeof(tokbuf), fp)) != -1) {
+        if (tok == RBRACKET) {
+            debug_trace("End of array found.\n");
+            break;
+        }
+        switch (tok) {
+        case STRING:
+        case WORD:
+            debug_trace("Collected value '%s'\n", tokbuf);
+            if (offset >= array->maxlen) {
+                debug_trace("Too many elements in array.\n");
+                return -1;
+            }
+            switch (array->type) {
+            case integer_t:
+                {
+                    char *endptr;
+                    long int val;
+                    errno = 0;
+                    val = strtol(tokbuf, &endptr, 0);
+                    if ((errno == ERANGE &&
+                         (val == LONG_MAX || val == LONG_MIN))
+                        || (errno != 0 && val == 0)) {
+                        debug_trace("Error parsing a number.\n");
+                        return -1;
+                    }
+                    if (tokbuf == endptr) {
+                        debug_trace("Not a valid number.\n");
+                        return -1;
+                    }
+                    array->store.integers[offset] = (int) val;
+                }
+                break;
+            case real_t:
+                {
+                    char *endptr;
+                    double val;
+                    errno = 0;
+                    val = strtod(tokbuf, &endptr);
+                    if ((errno == ERANGE &&
+                         (val == HUGE_VAL || val == -HUGE_VAL))
+                        || (errno != 0 && val == 0)) {
+                        debug_trace("Error parsing a number.\n");
+                        return -1;
+                    }
+                    if (tokbuf == endptr) {
+                        debug_trace("Not a valid number.\n");
+                        return -1;
+                    }
+                    array->store.reals[offset] = val;
+                }
+                break;
+            case array_t:
+            case table_t:
+                debug_trace("Invalid array type.\n");
+                return -1;
+            }
+            break;
+        case LBRACE: /* [ { }, { } ] */
+            /* TODO: load inline table */
+            break;
+        case COMMA:
+            continue;
+        default:
+            debug_trace("Invalid array syntax.\n");
+            return -1;
+        }
+        offset++;
+    }
+    if (array->count != NULL)
+        *(array->count) = offset;
+    return 0;
+}
+
+/* Parses key/value pairs. */
+static int load_key_value(FILE *fp, const struct toml_key_t *keys,
+                          const char *key)
 {
     char tokbuf[128];
     int tok;
     const struct toml_key_t *cursor;
-    const struct toml_key_t *curtab = keys;
     size_t maxlen = 0;
     char *valp;
 
-    while ((tok = scan(tokbuf, sizeof(tokbuf), fp)) != -1) {
-        switch (tok) {
-        /* TODO: [ x.y.z ] or [[ x.y.z ]] */
-        case LBRACKET: /* [ x ] */
-            tok = scan(tokbuf, sizeof(tokbuf), fp);
-            if (tok != WORD) {
-                debug_trace("Invalid syntax\n");
-                return -1;
-            }
-
-            debug_trace("Collected table name '%s'\n", tokbuf);
-            for (cursor = keys; cursor->key != NULL; cursor++) {
-                if (strcmp(cursor->key, tokbuf) == 0)
-                    break;
-            }
-            if (cursor->key == NULL) {
-                debug_trace("Unknown table name '%s'\n", tokbuf);
-                return -1;
-            }
-            if (cursor->type != table_t) {
-                debug_trace("Saw simple value type when expecting "
-                        "a table.\n");
-                return -1;
-            }
-            tok = scan(tokbuf, sizeof(tokbuf), fp);
-            if (tok != RBRACKET) {
-                debug_trace("Missing ']'\n");
-                return -1;
-            }
-            curtab = cursor->addr.keys;
+    debug_trace("Collected key name '%s'\n", key);
+    for (cursor = keys; cursor->key != NULL; cursor++) {
+        if (strcmp(cursor->key, key) == 0)
             break;
-        case WORD: /* key/value */
-            debug_trace("Collected key name '%s'\n", tokbuf);
-            for (cursor = curtab; cursor->key != NULL; cursor++) {
-                if (strcmp(cursor->key, tokbuf) == 0)
-                    break;
-            }
-            if (cursor->key == NULL) {
-                debug_trace("Unknown key name '%s'\n", tokbuf);
+    }
+    if (cursor->key == NULL) {
+        debug_trace("Unknown key name '%s'\n", key);
+        return -1;
+    }
+    if (cursor->type == string_t)
+        maxlen = cursor->len;
+    else
+        maxlen = sizeof(tokbuf);
+
+    tok = scan(tokbuf, sizeof(tokbuf), fp);
+    if (tok != EQUAL) {
+        debug_trace("Missing '='\n");
+        return -1;
+    }
+
+    tok = scan(tokbuf, maxlen, fp);
+    switch (tok) {
+        case STRING: /* key = "value" */
+        case WORD:
+            debug_trace("Collected value '%s'\n", tokbuf);
+            /* FIXME: validate types */
+            if (tok == STRING && cursor->type != string_t) {
+                debug_trace("Saw quoted value when expecting "
+                            "non-string.\n");
                 return -1;
             }
-            if (cursor->type == string_t)
-                maxlen = cursor->len;
-            else
-                maxlen = sizeof(tokbuf);
-
-            tok = scan(tokbuf, sizeof(tokbuf), fp);
-            if (tok != EQUAL) {
-                debug_trace("Missing '='\n");
+            if (tok != STRING && cursor->type == string_t) {
+                debug_trace("Didn't see quoted value when "
+                            "expecting string.\n");
                 return -1;
             }
 
-            tok = scan(tokbuf, maxlen, fp);
-            switch (tok) {
-            case STRING: /* key = "value" */
-            case WORD:
-                debug_trace("Collected value '%s'\n", tokbuf);
-                /* FIXME: validate types */
-                if (tok == STRING && cursor->type != string_t) {
-                    debug_trace("Saw quoted value when expecting "
-                                "non-string.\n");
-                    return -1;
-                }
-                if (tok != STRING && cursor->type == string_t) {
-                    debug_trace("Didn't see quoted value when "
-                                "expecting string.\n");
-                    return -1;
-                }
-
-                if ((valp = target_address(cursor)) != NULL)
-                    switch (cursor->type) {
+            if ((valp = target_address(cursor)) != NULL)
+                switch (cursor->type) {
                     case string_t:
                         {
                             size_t vl = strlen(tokbuf);
@@ -302,14 +354,64 @@ int toml_load(FILE *fp, const struct toml_key_t *keys)
                     case table_t:
                     default:
                         ;
-                    }
-                break;
-            case LBRACKET: /* key = [ ] */
-                break;
-            case LBRACE: /* key = { } */
-                break;
-            default:
-                debug_trace("Invalid syntax\n");
+                }
+            break;
+        case LBRACKET: /* key = [ ] */
+            if (cursor->type != array_t) {
+                debug_trace("Saw [ when expecting array.\n");
+                return -1;
+            }
+            return load_array(fp, &cursor->addr.array);
+        case LBRACE: /* key = { } */
+            /* TODO: load inline table */
+            break;
+        default:
+            debug_trace("Invalid syntax\n");
+            return -1;
+    }
+    return 0;
+}
+
+int toml_load(FILE *fp, const struct toml_key_t *keys)
+{
+    const struct toml_key_t *curtab = keys;
+    const struct toml_key_t *cursor;
+    char tokbuf[128];
+    int tok;
+
+    while ((tok = scan(tokbuf, sizeof(tokbuf), fp)) != -1) {
+        switch (tok) {
+        case LBRACKET: /* [table] or [[table]] */
+            tok = scan(tokbuf, sizeof(tokbuf), fp);
+            if (tok != WORD && tok != STRING) {
+                debug_trace("Invalid syntax.\n");
+                return -1;
+            }
+            debug_trace("Collected table name '%s'\n", tokbuf);
+            for (cursor = keys; cursor->key != NULL; cursor++) {
+                if (strcmp(cursor->key, tokbuf) == 0)
+                    break;
+            }
+            if (cursor->key == NULL) {
+                debug_trace("Unknown table name '%s'\n", tokbuf);
+                return -1;
+            }
+            if (cursor->type != table_t) {
+                debug_trace("Saw simple value type when expecting "
+                            "a table.\n");
+                return -1;
+            }
+            tok = scan(tokbuf, sizeof(tokbuf), fp);
+            if (tok != RBRACKET) {
+                debug_trace("Missing ']'\n");
+                return -1;
+            }
+            curtab = cursor->addr.keys;
+            break;
+        case STRING: /* key/value pairs */
+        case WORD:
+            if (load_key_value(fp, curtab, tokbuf) == -1) {
+                debug_trace("load_key_value() failed: key is '%s'.\n", tokbuf);
                 return -1;
             }
             break;

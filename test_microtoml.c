@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include "mtoml.h"
+#include "toml.h"
 
 
 static void assert_real(const char *key, double want, double got)
@@ -136,6 +136,101 @@ int test_tables(FILE *fp)
     return 0;
 }
 
+int test_array_integers(FILE *fp)
+{
+    int status;
+    int integers1[3], integers2[2], integers3[3];
+    int count1, count2, count3;
+    const struct toml_array_t array1 = {
+        .type = integer_t,
+        .store.integers = integers1,
+        .count = &count1,
+        .maxlen = sizeof(integers1)/sizeof(integers1[0])
+    };
+    const struct toml_array_t array2 = {
+        .type = integer_t,
+        .store.integers = integers2,
+        .count = &count2,
+        .maxlen = sizeof(integers2)/sizeof(integers2[0])
+    };
+    const struct toml_array_t array3 = {
+        .type = integer_t,
+        .store.integers = integers3,
+        .count = &count3,
+        .maxlen = sizeof(integers3)/sizeof(integers3[0])
+    };
+    const struct toml_key_t keys[] = {
+        {"integers1", array_t, .addr.array = array1},
+        {"integers2", array_t, .addr.array = array2},
+        {"integers3", array_t, .addr.array = array3},
+        {NULL}
+    };
+
+    if ((status = toml_load(fp, keys)) == -1) {
+        printf("toml_load failed: %d\n", status);
+        return -1;
+    }
+    assert_integer("count1", 3, count1);
+    assert_integer("integers1[0]", 23, integers1[0]);
+    assert_integer("integers1[1]", -12, integers1[1]);
+    assert_integer("integers1[2]", 92, integers1[2]);
+
+    assert_integer("count2", 2, count2);
+    assert_integer("integers2[0]", 3, integers2[0]);
+    assert_integer("integers2[1]", 18, integers2[1]);
+
+    assert_integer("count3", 0, count3);
+    return 0;
+}
+
+int test_array_reals(FILE *fp)
+{
+    int status;
+    double reals1[3], reals2[3], reals3[3];
+    int count1, count2, count3;
+    const struct toml_array_t array1 = {
+        .type = real_t,
+        .store.reals = reals1,
+        .count = &count1,
+        .maxlen = sizeof(reals1)/sizeof(reals1[0])
+    };
+    const struct toml_array_t array2 = {
+        .type = real_t,
+        .store.reals = reals2,
+        .count = &count2,
+        .maxlen = sizeof(reals2)/sizeof(reals2[0])
+    };
+    const struct toml_array_t array3 = {
+        .type = real_t,
+        .store.reals = reals3,
+        .count = &count3,
+        .maxlen = sizeof(reals3)/sizeof(reals3[0])
+    };
+    const struct toml_key_t keys[] = {
+        {"reals1", array_t, .addr.array = array1},
+        {"reals2", array_t, .addr.array = array2},
+        {"reals3", array_t, .addr.array = array3},
+        {NULL}
+    };
+
+    if ((status = toml_load(fp, keys)) == -1) {
+        printf("toml_load failed: %d\n", status);
+        return -1;
+    }
+    assert_integer("count1", 0, count1);
+
+    assert_integer("count2", 3, count2);
+    assert_real("reals2[0]", 23.112, reals2[0]);
+    assert_real("reals2[1]", -8.32, reals2[1]);
+    assert_real("reals2[2]", 0.72, reals2[2]);
+
+    assert_integer("count3", 3, count3);
+    assert_real("reals3[0]", 3.1, reals3[0]);
+    assert_real("reals3[1]", -21.0, reals3[1]);
+    assert_real("reals3[2]", -0.7, reals3[2]);
+    return 0;
+}
+
 
 const struct test {
     char *name;
@@ -143,6 +238,8 @@ const struct test {
 } tests[] = {
     {"values", test_values},
     {"tables", test_tables},
+    {"array_integers", test_array_integers},
+    {"array_reals", test_array_reals},
     {NULL}
 };
 
@@ -153,7 +250,7 @@ int main(int argc, char *argv[])
     const struct test *t;
 
     for (t = tests; t->name != NULL; t++) {
-        snprintf(file, sizeof(file), "%s.toml", t->name);
+        snprintf(file, sizeof(file), "tests/%s.toml", t->name);
         if ((fp = fopen(file, "r")) == NULL) {
             printf("can't open file %s\n", file);
         } else {

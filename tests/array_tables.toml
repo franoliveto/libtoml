@@ -1,0 +1,39 @@
+[[channel]]
+enable = true
+radio = 0
+if = -400000
+
+[[channel]]
+enable = true
+radio = 0
+if = -200000
+
+[[channel]]
+enable = true
+radio = 0
+if = 0
+
+[[channel]]
+enable = true
+radio = 0
+if = 200000
+
+[[channel]]
+enable = true
+radio = 1
+if = -300000
+
+[[channel]]
+enable = true
+radio = 1
+if = -100000
+
+[[channel]]
+enable = true
+radio = 1
+if = 100000
+
+[[channel]]
+enable = true
+radio = 1
+if = 300000

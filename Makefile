@@ -9,10 +9,10 @@ CFLAGS += -DDEBUG_ENABLE -g
 
 all: test_microtoml mtoml.3
 
-test_microtoml: test_microtoml.o mtoml.o
-	$(CC) $(CFLAGS) -o test_microtoml test_microtoml.o mtoml.o
+test_microtoml: test_microtoml.o toml.o
+	$(CC) $(CFLAGS) -o test_microtoml test_microtoml.o toml.o
 
-mtoml.o: mtoml.h
+toml.o: toml.h
 test_microtoml.o:
 
 mtoml.3: mtoml.adoc

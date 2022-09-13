@@ -1,10 +1,19 @@
 == microtoml
 
-microtoml is a tiny TOML parser that uses only fixed-extent storage, and
+microtoml is a tiny TOML parser that uses only fixed-extent storage. It
 is intended for use in constrained environments.
 
-It is a plaything and a work in progress. It is not even yet compliant with
-TOML v0.1.0.
+microtoml parses a large subset of TOML (Tom's Obvious Minimal Language).
+Unlike more general TOML parsers, it doesn't use malloc(3); you need to
+give it a set of template structures describing the expected shape of
+the incoming TOML, and it will error out if that shape is not matched.
+When the parse succeeds, key values will be extracted into static
+locations specified in the template structures.
+
+The dialect it parses has some limitations. First, only ASCII encoded
+files are considered to be valid TOML documents. Second, all elements
+of an array must be of the same type. Third, arrays may not be array
+elements.
 
 To be built, it requires make, a C compiler, and asciidoctor to
 format the documentation.
@@ -21,3 +30,13 @@ To run the tests:
 make test
 ```
 
+== Things To Do
+
+We need help implementing the following features:
+
+* Inline tables.
+* Date-Time type.
+* Escape characters.
+* Array of tables.
+* Array of inline tables.
+* Dotted keys and tables.

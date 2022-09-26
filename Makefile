@@ -12,8 +12,8 @@ all: test_microtoml mtoml.3
 test_microtoml: test_microtoml.o toml.o
 	$(CC) $(CFLAGS) -o test_microtoml test_microtoml.o toml.o
 
-toml.o: toml.h
-test_microtoml.o:
+toml.o: toml.c toml.h
+test_microtoml.o: test_microtoml.c
 
 mtoml.3: mtoml.adoc
 	asciidoctor -b manpage $<

@@ -21,13 +21,13 @@ format the documentation.
 Building is straightforward. Simply, run:
 
 ```
-make
+$ make
 ```
 
 To run the tests:
 
 ```
-make test
+$ make test
 ```
 
 == Things To Do

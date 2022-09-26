@@ -231,6 +231,57 @@ int test_array_reals(FILE *fp)
     return 0;
 }
 
+int test_array_booleans(FILE *fp)
+{
+    int status;
+    bool booleans1[6], booleans2[2], booleans3[3];
+    int count1, count2, count3;
+    const struct toml_array_t array1 = {
+        .type = boolean_t,
+        .store.booleans = booleans1,
+        .count = &count1,
+        .maxlen = sizeof(booleans1)/sizeof(booleans1[0])
+    };
+    const struct toml_array_t array2 = {
+        .type = boolean_t,
+        .store.booleans = booleans2,
+        .count = &count2,
+        .maxlen = sizeof(booleans2)/sizeof(booleans2[0])
+    };
+    const struct toml_array_t array3 = {
+        .type = boolean_t,
+        .store.booleans = booleans3,
+        .count = &count3,
+        .maxlen = sizeof(booleans3)/sizeof(booleans3[0])
+    };
+    const struct toml_key_t keys[] = {
+        {"booleans1", array_t, .addr.array = array1},
+        {"booleans2", array_t, .addr.array = array2},
+        {"booleans3", array_t, .addr.array = array3},
+        {NULL}
+    };
+
+    if ((status = toml_load(fp, keys)) == -1) {
+        printf("toml_load failed: %d\n", status);
+        return -1;
+    }
+    assert_integer("count1", 6, count1);
+    assert_boolean("booleans1[0]", true, booleans1[0]);
+    assert_boolean("booleans1[1]", false, booleans1[1]);
+    assert_boolean("booleans1[2]", false, booleans1[2]);
+    assert_boolean("booleans1[3]", true, booleans1[3]);
+    assert_boolean("booleans1[4]", false, booleans1[4]);
+    assert_boolean("booleans1[5]", true, booleans1[5]);
+
+    assert_boolean("count2", 2, count2);
+    assert_boolean("booleans2[0]", false, booleans2[0]);
+    assert_boolean("booleans2[1]", true, booleans2[1]);
+
+    assert_boolean("count3", 0, count3);
+    return 0;
+}
+
+
 
 const struct test {
     char *name;
@@ -240,6 +291,7 @@ const struct test {
     {"tables", test_tables},
     {"array_integers", test_array_integers},
     {"array_reals", test_array_reals},
+    {"array_booleans", test_array_booleans},
     {NULL}
 };
 

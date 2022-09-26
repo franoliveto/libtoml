@@ -23,7 +23,13 @@ struct toml_array_t {
     enum toml_type type;
     union {
         int *integers;
+        unsigned int *uintegers;
+        short *shortints;
+        unsigned short *ushortints;
+        long *longints;
+        unsigned long *ulongints;
         double *reals;
+        bool *booleans;
     } store;
     int *count;
     int maxlen;

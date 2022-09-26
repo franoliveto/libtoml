@@ -1,0 +1,14 @@
+booleans1 = [ 
+        true, 
+        false, 
+        false,
+	true,
+
+
+false, # this must work just fine
+true
+]
+booleans2 = [ 
+        false, true, # comments are allowed
+]
+booleans3 = [    ]

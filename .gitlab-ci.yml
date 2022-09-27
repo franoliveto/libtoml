@@ -1,0 +1,13 @@
+image: gcc
+
+build:
+  stage: build
+  before_script:
+    - apt update && apt -y install make asciidoctor
+  script:
+    - make
+
+test:
+  stage: test
+  script:
+    - make test

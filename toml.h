@@ -61,5 +61,21 @@ struct toml_key_t {
 
 int toml_load(FILE *fp, const struct toml_key_t *keys);
 
+/* Use the following macro to declare template initializers
+   for arrays of strings. Writing the equivalentes out by
+   hand is error-prone.
+
+   STRINGARRAY takes the base address of an array of
+   pointers to char, the base address of the storage,
+   and the address of an integer to store the lenght in. */
+#define STRINGARRAY(p, s, n)                        \
+    .addr.array.type = string_t,                    \
+    .addr.array.arr.strings.ptrs = p,               \
+    .addr.array.arr.strings.store = s,              \
+    .addr.array.arr.strings.storelen = sizeof(s),   \
+    .addr.array.count = n,                          \
+    .addr.array.maxlen = (sizeof(p)/sizeof(p[0]))
+
+
 
 #endif /* _MICRO_TOML_H_ */

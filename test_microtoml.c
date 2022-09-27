@@ -141,28 +141,22 @@ int test_array_integers(FILE *fp)
     int status;
     int integers1[3], integers2[2], integers3[3];
     int count1, count2, count3;
-    const struct toml_array_t array1 = {
-        .type = integer_t,
-        .arr.integers = integers1,
-        .count = &count1,
-        .maxlen = sizeof(integers1)/sizeof(integers1[0])
-    };
-    const struct toml_array_t array2 = {
-        .type = integer_t,
-        .arr.integers = integers2,
-        .count = &count2,
-        .maxlen = sizeof(integers2)/sizeof(integers2[0])
-    };
-    const struct toml_array_t array3 = {
-        .type = integer_t,
-        .arr.integers = integers3,
-        .count = &count3,
-        .maxlen = sizeof(integers3)/sizeof(integers3[0])
-    };
     const struct toml_key_t keys[] = {
-        {"integers1", array_t, .addr.array = array1},
-        {"integers2", array_t, .addr.array = array2},
-        {"integers3", array_t, .addr.array = array3},
+        {"integers1", array_t,
+         .addr.array.type = integer_t,
+         .addr.array.arr.integers = integers1,
+         .addr.array.count = &count1,
+         .addr.array.maxlen = sizeof(integers1)/sizeof(integers1[0])},
+        {"integers2", array_t,
+         .addr.array.type = integer_t,
+         .addr.array.arr.integers = integers2,
+         .addr.array.count = &count2,
+         .addr.array.maxlen = sizeof(integers2)/sizeof(integers2[0])},
+        {"integers3", array_t,
+         .addr.array.type = integer_t,
+         .addr.array.arr.integers = integers3,
+         .addr.array.count = &count3,
+         .addr.array.maxlen = sizeof(integers3)/sizeof(integers3[0])},
         {NULL}
     };
 
@@ -188,28 +182,22 @@ int test_array_reals(FILE *fp)
     int status;
     double reals1[3], reals2[3], reals3[3];
     int count1, count2, count3;
-    const struct toml_array_t array1 = {
-        .type = real_t,
-        .arr.reals = reals1,
-        .count = &count1,
-        .maxlen = sizeof(reals1)/sizeof(reals1[0])
-    };
-    const struct toml_array_t array2 = {
-        .type = real_t,
-        .arr.reals = reals2,
-        .count = &count2,
-        .maxlen = sizeof(reals2)/sizeof(reals2[0])
-    };
-    const struct toml_array_t array3 = {
-        .type = real_t,
-        .arr.reals = reals3,
-        .count = &count3,
-        .maxlen = sizeof(reals3)/sizeof(reals3[0])
-    };
     const struct toml_key_t keys[] = {
-        {"reals1", array_t, .addr.array = array1},
-        {"reals2", array_t, .addr.array = array2},
-        {"reals3", array_t, .addr.array = array3},
+        {"reals1", array_t,
+         .addr.array.type = real_t,
+         .addr.array.arr.reals = reals1,
+         .addr.array.count = &count1,
+         .addr.array.maxlen = sizeof(reals1)/sizeof(reals1[0])},
+        {"reals2", array_t,
+         .addr.array.type = real_t,
+         .addr.array.arr.reals = reals2,
+         .addr.array.count = &count2,
+         .addr.array.maxlen = sizeof(reals2)/sizeof(reals2[0])},
+        {"reals3", array_t,
+         .addr.array.type = real_t,
+         .addr.array.arr.reals = reals3,
+         .addr.array.count = &count3,
+         .addr.array.maxlen = sizeof(reals3)/sizeof(reals3[0])},
         {NULL}
     };
 
@@ -236,28 +224,22 @@ int test_array_booleans(FILE *fp)
     int status;
     bool booleans1[6], booleans2[2], booleans3[3];
     int count1, count2, count3;
-    const struct toml_array_t array1 = {
-        .type = boolean_t,
-        .arr.booleans = booleans1,
-        .count = &count1,
-        .maxlen = sizeof(booleans1)/sizeof(booleans1[0])
-    };
-    const struct toml_array_t array2 = {
-        .type = boolean_t,
-        .arr.booleans = booleans2,
-        .count = &count2,
-        .maxlen = sizeof(booleans2)/sizeof(booleans2[0])
-    };
-    const struct toml_array_t array3 = {
-        .type = boolean_t,
-        .arr.booleans = booleans3,
-        .count = &count3,
-        .maxlen = sizeof(booleans3)/sizeof(booleans3[0])
-    };
     const struct toml_key_t keys[] = {
-        {"booleans1", array_t, .addr.array = array1},
-        {"booleans2", array_t, .addr.array = array2},
-        {"booleans3", array_t, .addr.array = array3},
+        {"booleans1", array_t,
+         .addr.array.type = boolean_t,
+         .addr.array.arr.booleans = booleans1,
+         .addr.array.count = &count1,
+         .addr.array.maxlen = sizeof(booleans1)/sizeof(booleans1[0])},
+        {"booleans2", array_t,
+         .addr.array.type = boolean_t,
+         .addr.array.arr.booleans = booleans2,
+         .addr.array.count = &count2,
+         .addr.array.maxlen = sizeof(booleans2)/sizeof(booleans2[0])},
+        {"booleans3", array_t,
+         .addr.array.type = boolean_t,
+         .addr.array.arr.booleans = booleans3,
+         .addr.array.count = &count3,
+         .addr.array.maxlen = sizeof(booleans3)/sizeof(booleans3[0])},
         {NULL}
     };
 
@@ -293,34 +275,10 @@ int test_array_strings(FILE *fp)
     char *strings3[3];
     char strings3store[2];
     int count3;
-    const struct toml_array_t array1 = {
-        .type = string_t,
-        .arr.strings.ptrs = strings1,
-        .arr.strings.store = strings1store,
-        .arr.strings.storelen = sizeof(strings1store),
-        .count = &count1,
-        .maxlen = sizeof(strings1)/sizeof(strings1[0])
-    };
-    const struct toml_array_t array2 = {
-        .type = string_t,
-        .arr.strings.ptrs = strings2,
-        .arr.strings.store = strings2store,
-        .arr.strings.storelen = sizeof(strings2store),
-        .count = &count2,
-        .maxlen = sizeof(strings2)/sizeof(strings2[0])
-    };
-    const struct toml_array_t array3 = {
-        .type = string_t,
-        .arr.strings.ptrs = strings3,
-        .arr.strings.store = strings3store,
-        .arr.strings.storelen = sizeof(strings3store),
-        .count = &count3,
-        .maxlen = sizeof(strings3)/sizeof(strings3[0])
-    };
     const struct toml_key_t keys[] = {
-        {"strings1", array_t, .addr.array = array1},
-        {"strings2", array_t, .addr.array = array2},
-        {"strings3", array_t, .addr.array = array3},
+        {"strings1", array_t, STRINGARRAY(strings1, strings1store, &count1)},
+        {"strings2", array_t, STRINGARRAY(strings2, strings2store, &count2)},
+        {"strings3", array_t, STRINGARRAY(strings3, strings3store, &count3)},
         {NULL}
     };
 

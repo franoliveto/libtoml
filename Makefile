@@ -4,7 +4,7 @@ VERSION = 0.1
 
 CFLAGS = -Wall -Werror
 # Add DEBUG_ENABLE for the tracing code
-CFLAGS += -DDEBUG_ENABLE -g
+#CFLAGS += -DDEBUG_ENABLE -g
 
 
 all: test_microtoml mtoml.3

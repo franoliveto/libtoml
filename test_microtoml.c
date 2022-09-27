@@ -143,19 +143,19 @@ int test_array_integers(FILE *fp)
     int count1, count2, count3;
     const struct toml_array_t array1 = {
         .type = integer_t,
-        .store.integers = integers1,
+        .arr.integers = integers1,
         .count = &count1,
         .maxlen = sizeof(integers1)/sizeof(integers1[0])
     };
     const struct toml_array_t array2 = {
         .type = integer_t,
-        .store.integers = integers2,
+        .arr.integers = integers2,
         .count = &count2,
         .maxlen = sizeof(integers2)/sizeof(integers2[0])
     };
     const struct toml_array_t array3 = {
         .type = integer_t,
-        .store.integers = integers3,
+        .arr.integers = integers3,
         .count = &count3,
         .maxlen = sizeof(integers3)/sizeof(integers3[0])
     };
@@ -190,19 +190,19 @@ int test_array_reals(FILE *fp)
     int count1, count2, count3;
     const struct toml_array_t array1 = {
         .type = real_t,
-        .store.reals = reals1,
+        .arr.reals = reals1,
         .count = &count1,
         .maxlen = sizeof(reals1)/sizeof(reals1[0])
     };
     const struct toml_array_t array2 = {
         .type = real_t,
-        .store.reals = reals2,
+        .arr.reals = reals2,
         .count = &count2,
         .maxlen = sizeof(reals2)/sizeof(reals2[0])
     };
     const struct toml_array_t array3 = {
         .type = real_t,
-        .store.reals = reals3,
+        .arr.reals = reals3,
         .count = &count3,
         .maxlen = sizeof(reals3)/sizeof(reals3[0])
     };
@@ -238,19 +238,19 @@ int test_array_booleans(FILE *fp)
     int count1, count2, count3;
     const struct toml_array_t array1 = {
         .type = boolean_t,
-        .store.booleans = booleans1,
+        .arr.booleans = booleans1,
         .count = &count1,
         .maxlen = sizeof(booleans1)/sizeof(booleans1[0])
     };
     const struct toml_array_t array2 = {
         .type = boolean_t,
-        .store.booleans = booleans2,
+        .arr.booleans = booleans2,
         .count = &count2,
         .maxlen = sizeof(booleans2)/sizeof(booleans2[0])
     };
     const struct toml_array_t array3 = {
         .type = boolean_t,
-        .store.booleans = booleans3,
+        .arr.booleans = booleans3,
         .count = &count3,
         .maxlen = sizeof(booleans3)/sizeof(booleans3[0])
     };
@@ -281,6 +281,66 @@ int test_array_booleans(FILE *fp)
     return 0;
 }
 
+int test_array_strings(FILE *fp)
+{
+    int status;
+    char *strings1[3];
+    char strings1store[64];
+    int count1;
+    char *strings2[3];
+    char strings2store[64];
+    int count2;
+    char *strings3[3];
+    char strings3store[2];
+    int count3;
+    const struct toml_array_t array1 = {
+        .type = string_t,
+        .arr.strings.ptrs = strings1,
+        .arr.strings.store = strings1store,
+        .arr.strings.storelen = sizeof(strings1store),
+        .count = &count1,
+        .maxlen = sizeof(strings1)/sizeof(strings1[0])
+    };
+    const struct toml_array_t array2 = {
+        .type = string_t,
+        .arr.strings.ptrs = strings2,
+        .arr.strings.store = strings2store,
+        .arr.strings.storelen = sizeof(strings2store),
+        .count = &count2,
+        .maxlen = sizeof(strings2)/sizeof(strings2[0])
+    };
+    const struct toml_array_t array3 = {
+        .type = string_t,
+        .arr.strings.ptrs = strings3,
+        .arr.strings.store = strings3store,
+        .arr.strings.storelen = sizeof(strings3store),
+        .count = &count3,
+        .maxlen = sizeof(strings3)/sizeof(strings3[0])
+    };
+    const struct toml_key_t keys[] = {
+        {"strings1", array_t, .addr.array = array1},
+        {"strings2", array_t, .addr.array = array2},
+        {"strings3", array_t, .addr.array = array3},
+        {NULL}
+    };
+
+    if ((status = toml_load(fp, keys)) == -1) {
+        printf("toml_load failed: %d\n", status);
+        return -1;
+    }
+    assert_integer("count1", 3, count1);
+    assert_string("strings1[0]", "one", strings1[0]);
+    assert_string("strings1[1]", "two", strings1[1]);
+    assert_string("strings1[2]", "three", strings1[2]);
+
+    assert_integer("count2", 3, count2);
+    assert_string("strings2[0]", "four", strings2[0]);
+    assert_string("strings2[1]", "five", strings2[1]);
+    assert_string("strings2[2]", "thisisalongstring", strings2[2]);
+
+    assert_integer("count3", 0, count3);
+    return 0;
+}
 
 
 const struct test {
@@ -292,6 +352,7 @@ const struct test {
     {"array_integers", test_array_integers},
     {"array_reals", test_array_reals},
     {"array_booleans", test_array_booleans},
+    {"array_strings", test_array_strings},
     {NULL}
 };
 

@@ -136,6 +136,9 @@ static int load_array(FILE *fp, const struct toml_array_t *array)
 {
     int tok, offset = 0;
     char tokbuf[TOKBUFSIZ];
+    char *sp;
+
+    sp = array->arr.strings.store;
 
     while ((tok = scan(tokbuf, sizeof(tokbuf), fp)) != -1) {
         if (tok == RBRACKET) {
@@ -151,6 +154,21 @@ static int load_array(FILE *fp, const struct toml_array_t *array)
                 return -1;
             }
             switch (array->type) {
+            case string_t:
+                {
+                    array->arr.strings.ptrs[offset] = sp;
+                    size_t used = sp - array->arr.strings.store;
+                    size_t free = array->arr.strings.storelen - used;
+                    size_t len = strlen(tokbuf);
+                    if (len+1 > free) {
+                        debug_trace("Ran out of storage for strings.\n");
+                        return -1;
+                    }
+                    memcpy(sp, tokbuf, len);
+                    *(sp + len) = '\0';
+                    sp = sp + len + 1;
+                }
+                break;
             case integer_t:
             case uinteger_t:
             case short_t:
@@ -174,22 +192,22 @@ static int load_array(FILE *fp, const struct toml_array_t *array)
                     }
                     switch (array->type) {
                     case integer_t:
-                        array->store.integers[offset] = (int) val;
+                        array->arr.integers[offset] = (int) val;
                         break;
                     case uinteger_t:
-                        array->store.uintegers[offset] = (unsigned int) val;
+                        array->arr.uintegers[offset] = (unsigned int) val;
                         break;
                     case short_t:
-                        array->store.shortints[offset] = (short) val;
+                        array->arr.shortints[offset] = (short) val;
                         break;
                     case ushort_t:
-                        array->store.ushortints[offset] = (unsigned short) val;
+                        array->arr.ushortints[offset] = (unsigned short) val;
                         break;
                     case long_t:
-                        array->store.longints[offset] = val;
+                        array->arr.longints[offset] = val;
                         break;
                     case ulong_t:
-                        array->store.ulongints[offset] = (unsigned long) val;
+                        array->arr.ulongints[offset] = (unsigned long) val;
                         break;
                     default:
                         ;
@@ -212,7 +230,7 @@ static int load_array(FILE *fp, const struct toml_array_t *array)
                         debug_trace("Not a valid number.\n");
                         return -1;
                     }
-                    array->store.reals[offset] = val;
+                    array->arr.reals[offset] = val;
                 }
                 break;
             case boolean_t:
@@ -227,10 +245,8 @@ static int load_array(FILE *fp, const struct toml_array_t *array)
                                     tokbuf);
                         return -1;
                     }
-                    array->store.booleans[offset] = val;
+                    array->arr.booleans[offset] = val;
                 }
-                break;
-            case string_t:
                 break;
             case array_t:
             case table_t:

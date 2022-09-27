@@ -1,0 +1,3 @@
+strings1 = ["one", "two", "three"]
+strings2 = ["four", "five", "thisisalongstring",]
+strings3 = []

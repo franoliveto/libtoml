@@ -22,6 +22,11 @@ enum toml_type {
 struct toml_array_t {
     enum toml_type type;
     union {
+        struct {
+            char **ptrs;
+            char *store;
+            int storelen;
+        } strings;
         int *integers;
         unsigned int *uintegers;
         short *shortints;
@@ -30,7 +35,7 @@ struct toml_array_t {
         unsigned long *ulongints;
         double *reals;
         bool *booleans;
-    } store;
+    } arr;
     int *count;
     int maxlen;
 };

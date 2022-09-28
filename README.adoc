@@ -30,9 +30,17 @@ To run the tests:
 $ make test
 ```
 
-== Things To Do
+== How to Contribute
 
-We need help implementing the following features:
+We'd love to accept contributions to this project. The following is a
+list of the things that need to be done. Most of them are core features,
+but we also need help writing documentation and tests.
+
+Follow the normal process of forking the project, and setup a new branch
+to work in. Finally, push the commits to your fork and submit a merge
+request.
+
+=== Things to Do
 
 * Multi-line basic strings.
 * Literal strings.
@@ -43,3 +51,9 @@ We need help implementing the following features:
 * Array of tables.
 * Array of inline tables.
 * Dotted keys and tables.
+* Write a reference manual.
+* Example programs.
+* Build a shared library (libmtoml).
+* Add install/uninstall targets to Makefile.
+* Handle error codes (TOML_ERR_xxxx, toml_strerror()).
+

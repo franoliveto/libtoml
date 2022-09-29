@@ -1,13 +1,22 @@
+stages:
+  - build
+  - test
+
 image: gcc
 
-build:
+build-job:
   stage: build
   before_script:
-    - apt update && apt -y install make asciidoctor
+    - apt update && apt -y install asciidoctor
   script:
     - make
+  artifacts:
+    paths:
+      - test_microtoml
+    exclude:
+      - *.o
 
-test:
+test-job:
   stage: test
   script:
     - make test

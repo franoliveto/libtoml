@@ -13,6 +13,7 @@ build-job:
   artifacts:
     paths:
       - test_microtoml
+      - "*.o"
 
 test-job:
   stage: test

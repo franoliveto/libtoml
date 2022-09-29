@@ -30,7 +30,7 @@ version:
 	@echo $(VERSION)
 
 
-SOURCES = Makefile *.[ch] *.toml 
+SOURCES = Makefile *.[ch] tests/*.toml 
 DOCS = COPYING NEWS README.adoc mtoml.adoc
 ALL = $(SOURCES) $(DOCS)
 

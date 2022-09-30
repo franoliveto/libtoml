@@ -35,5 +35,5 @@ test-gcc:
   stage: test
   script:
     - ./test_microtoml
-   dependencies:
+  dependencies:
     - ubuntu-gcc

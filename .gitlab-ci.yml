@@ -2,19 +2,29 @@ stages:
   - build
   - test
 
-image: gcc
-
-build-job:
+ubuntu-gcc:
+  image: ubuntu:latest
   stage: build
   before_script:
-    - apt update && apt -y install asciidoctor
+    - apt update && apt -y install gcc make asciidoctor
   script:
     - make
   artifacts:
     paths:
       - test_microtoml
 
-test-job:
+ubuntu-clang:
+  image: ubuntu:20.04
+  stage: build
+  before_script:
+    - apt update && apt -y install clang make asciidoctor
+  script:
+    - env CC=clang make
+  artifacts:
+    paths:
+      - test_microtoml
+
+test:
   stage: test
   script:
     - ./test_microtoml

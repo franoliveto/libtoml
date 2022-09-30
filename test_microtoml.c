@@ -128,7 +128,7 @@ int test_tables(FILE *fp)
     assert_boolean("table-0.enable", true, toml.table0.enable);
     assert_string("table-0.type", "SX1250", toml.table0.type);
     assert_integer("table-0.freq", 917200000, toml.table0.freq);
-    assert_integer("table-0.rssi_offset", -215.4, toml.table0.rssi_offset);
+    assert_real("table-0.rssi_offset", -215.4, toml.table0.rssi_offset);
 
     assert_boolean("table-1.enable", true, toml.table1.enable);
     assert_integer("table-1.radio", 0, toml.table1.radio);

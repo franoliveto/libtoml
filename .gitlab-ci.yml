@@ -25,6 +25,7 @@ ubuntu-clang:
       - test_microtoml
 
 test-clang:
+  image: debian:latest
   stage: test
   script:
     - ./test_microtoml
@@ -32,6 +33,7 @@ test-clang:
     - ubuntu-clang
 
 test-gcc:
+  image: ubuntu:latest
   stage: test
   script:
     - ./test_microtoml

@@ -24,7 +24,16 @@ ubuntu-clang:
     paths:
       - test_microtoml
 
-test:
+test-clang:
   stage: test
   script:
     - ./test_microtoml
+  dependencies:
+    - ubuntu-clang
+
+test-gcc:
+  stage: test
+  script:
+    - ./test_microtoml
+   dependencies:
+    - ubuntu-gcc

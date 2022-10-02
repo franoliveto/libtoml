@@ -42,17 +42,18 @@ enum { TOKBUFSIZ = 512 };
 
 /* Token types */
 enum {
-      LBRACKET, /* '[' */
-      RBRACKET, /* ']' */
-      LBRACE,   /* '{' */
-      RBRACE,   /* '}' */
-      EQUAL,    /* '=' */
-      COMMA,    /* ',' */
-      DOT,      /* '.' */
-      WORD,     /* [0-9a-zA-Z+-_.] */
-      STRING    /* "WORD" */
+    LBRACKET, /* '[' */
+    RBRACKET, /* ']' */
+    LBRACE,   /* '{' */
+    RBRACE,   /* '}' */
+    EQUAL,    /* '=' */
+    COMMA,    /* ',' */
+    DOT,      /* '.' */
+    WORD,     /* [0-9a-zA-Z+-_.] */
+    STRING    /* "WORD" */
 };
 
+static int load_inline_table(FILE *fp, const struct toml_key_t *keys);
 
 /* Scans for WORD/STRING tokens that contain any of [0-9a-zA-Z+-_."] */
 static int scan_word(char *buf, size_t size, int c, FILE *fp)
@@ -408,13 +409,40 @@ static int load_key_value(FILE *fp, const struct toml_key_t *keys,
             }
             return load_array(fp, &cursor->addr.array);
         case LBRACE: /* key = { } */
-            /* TODO: load inline table */
-            break;
+            if (cursor->type != table_t) {
+                debug_trace("Saw { when not expecting a table.\n");
+                return -1;
+            }
+            return load_inline_table(fp, cursor->addr.keys);
         default:
             debug_trace("Invalid syntax\n");
             return -1;
     }
     return 0;
+}
+
+/* Parses inline tables: { key1 = value1, key2 = value2 } */
+static int load_inline_table(FILE *fp, const struct toml_key_t *keys)
+{
+    char tokbuf[TOKBUFSIZ];
+    int tok;
+
+    while ((tok = scan(tokbuf, sizeof(tokbuf), fp)) != -1) {
+        if (tok == RBRACE) /* reached the end of the table */
+            return 0;
+        if (tok == COMMA)
+            continue;
+        if (tok == STRING || tok == WORD) { /* key/value pairs */
+            if (load_key_value(fp, keys, tokbuf) == -1) {
+                debug_trace("load_key_value() failed: key is '%s'.\n", tokbuf);
+                return -1;
+            }
+        } else {
+            debug_trace("Invalid inline table syntax.\n");
+            return -1;
+        }
+    }
+    return -1;
 }
 
 int toml_load(FILE *fp, const struct toml_key_t *keys)

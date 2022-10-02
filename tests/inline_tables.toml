@@ -1,0 +1,8 @@
+# The following inline table is identical to:
+# [name]
+# first = "Ethan"
+# last = "Hawke"
+name = { first = "Ethan", last = "Hawke" }
+
+[math]
+point = { x = 1, y = 2 }

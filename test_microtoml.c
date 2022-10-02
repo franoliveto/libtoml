@@ -136,6 +136,42 @@ int test_tables(FILE *fp)
     return 0;
 }
 
+int test_inline_tables(FILE *fp)
+{
+    char first[32], last[32];
+    int x, y;
+    int status;
+    const struct toml_key_t name_keys[] = {
+        {"first", string_t, .addr.string = first, .len = sizeof(first)},
+        {"last", string_t, .addr.string = last, .len = sizeof(last)},
+        {NULL}
+    };
+    const struct toml_key_t point_keys[] = {
+        {"x", integer_t, .addr.integer = &x},
+        {"y", integer_t, .addr.integer = &y},
+        {NULL}
+    };
+    const struct toml_key_t math_keys[] = {
+        {"point", table_t, .addr.keys = point_keys},
+        {NULL}
+    };
+    const struct toml_key_t root[] = {
+        {"name", table_t, .addr.keys = name_keys},
+        {"math", table_t, .addr.keys = math_keys},
+        {NULL}
+    };
+
+    if ((status = toml_load(fp, root)) == -1) {
+        printf("toml_load failed: %d\n", status);
+        return -1;
+    }
+    assert_string("name.first", "Ethan", first);
+    assert_string("name.last", "Hawke", last);
+    assert_integer("math.point.x", 1, x);
+    assert_integer("math.point.y", 2, y);
+    return 0;
+}
+
 int test_array_integers(FILE *fp)
 {
     int status;
@@ -311,6 +347,7 @@ const struct test {
     {"array_reals", test_array_reals},
     {"array_booleans", test_array_booleans},
     {"array_strings", test_array_strings},
+    {"inline_tables", test_inline_tables},
     {NULL}
 };
 

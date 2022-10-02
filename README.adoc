@@ -45,7 +45,6 @@ request.
 * Multi-line basic strings.
 * Literal strings.
 * Multi-line literal strings.
-* Inline tables.
 * Date-Time type.
 * Escape characters.
 * Array of tables.

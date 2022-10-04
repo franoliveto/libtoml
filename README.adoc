@@ -48,7 +48,6 @@ request.
 * Date-Time type.
 * Escape characters.
 * Array of tables.
-* Array of inline tables.
 * Dotted keys and tables.
 * Write a reference manual.
 * Example programs.

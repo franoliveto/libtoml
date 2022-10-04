@@ -53,7 +53,8 @@ enum {
     STRING    /* "WORD" */
 };
 
-static int load_inline_table(FILE *fp, const struct toml_key_t *keys);
+static int load_inline_table(FILE *fp, const struct toml_key_t *keys,
+                             const struct toml_array_t *array, int offset);
 
 /* Scans for WORD/STRING tokens that contain any of [0-9a-zA-Z+-_."] */
 static int scan_word(char *buf, size_t size, int c, FILE *fp)
@@ -146,14 +147,21 @@ static int load_array(FILE *fp, const struct toml_array_t *array)
             debug_trace("End of array found.\n");
             break;
         }
+        if (tok == COMMA) {
+            debug_trace("Invalid array syntax; "
+                        "got ',' when expecting token.\n");
+            return -1;
+        }
+
+        if (offset >= array->maxlen) {
+            debug_trace("Too many elements in array.\n");
+            return -1;
+        }
+
         switch (tok) {
         case STRING:
         case WORD:
             debug_trace("Collected value '%s'\n", tokbuf);
-            if (offset >= array->maxlen) {
-                debug_trace("Too many elements in array.\n");
-                return -1;
-            }
             switch (array->type) {
             case string_t:
                 {
@@ -256,29 +264,95 @@ static int load_array(FILE *fp, const struct toml_array_t *array)
             }
             break;
         case LBRACE: /* [ { }, { } ] */
-            /* TODO: load inline table */
+            {
+                int status;
+                if (array->type != table_t) {
+                    debug_trace("Saw { when not expecting a table.\n");
+                    return -1;
+                }
+                status = load_inline_table(fp, array->arr.tables.subtype,
+                                           array, offset);
+                if (status == -1)
+                    return -1;
+            }
             break;
-        case COMMA:
-            continue;
         default:
             debug_trace("Invalid array syntax.\n");
             return -1;
         }
         offset++;
+
+        tok = scan(tokbuf, sizeof(tokbuf), fp);
+        if (tok == RBRACKET) {
+            debug_trace("End of array found.\n");
+            break;
+        }
+        if (tok == COMMA)
+            continue;
+        else {
+            debug_trace("Invalid array syntax; missing ','.\n");
+            return -1;
+        }
     }
     if (array->count != NULL)
         *(array->count) = offset;
     return 0;
 }
 
+static char *target_address(const struct toml_key_t *cursor,
+                            const struct toml_array_t *array,
+                            int offset)
+{
+    char *addr = NULL;
+
+    if (array == NULL) {
+        switch (cursor->type) {
+            case integer_t:
+                addr = (char *) cursor->addr.integer;
+                break;
+            case uinteger_t:
+                addr = (char *) cursor->addr.uinteger;
+                break;
+            case long_t:
+                addr = (char *) cursor->addr.longint;
+                break;
+            case ulong_t:
+                addr = (char *) cursor->addr.ulongint;
+                break;
+            case short_t:
+                addr = (char *) cursor->addr.shortint;
+                break;
+            case ushort_t:
+                addr = (char *) cursor->addr.ushortint;
+                break;
+            case real_t:
+                addr = (char *) cursor->addr.real;
+                break;
+            case boolean_t:
+                addr = (char *) cursor->addr.boolean;
+            case string_t:
+                addr = cursor->addr.string;
+                break;
+            default:
+                ;
+        }
+    } else
+        addr = array->arr.tables.base + (offset * array->arr.tables.structsize) +
+                cursor->addr.offset;
+    debug_trace("Target address for %s is %p.\n", cursor->key, addr);
+    return addr;
+}
+
 /* Parses key/value pairs. */
-static int load_key_value(FILE *fp, const struct toml_key_t *keys,
-                          const char *key)
+static int load_key_value(FILE *fp, const char *key,
+                          const struct toml_key_t *keys,
+                          const struct toml_array_t *array, int offset)
 {
     char tokbuf[TOKBUFSIZ];
     int tok;
     const struct toml_key_t *cursor;
     size_t maxlen = 0;
+    char *valp = NULL;
 
     debug_trace("Collected key name '%s'\n", key);
     for (cursor = keys; cursor->key != NULL; cursor++) {
@@ -322,85 +396,105 @@ static int load_key_value(FILE *fp, const struct toml_key_t *keys,
                 debug_trace("Got '%s' when expecting boolean.\n", tokbuf);
                 return -1;
             }
-            switch (cursor->type) {
-            case string_t:
-                {
-                    char *sp = cursor->addr.string;
-                    strncpy(sp, tokbuf, maxlen-1);
-                    sp[maxlen-1] = '\0';
+
+            valp = target_address(cursor, array, offset);
+            if (valp != NULL)
+                switch (cursor->type) {
+                case string_t:
+                    {
+                        strncpy(valp, tokbuf, maxlen-1);
+                        valp[maxlen-1] = '\0';
+                    }
+                    break;
+                case integer_t:
+                case uinteger_t:
+                case short_t:
+                case ushort_t:
+                case long_t:
+                case ulong_t:
+                    {
+                        char *endptr;
+                        long int val;
+                        errno = 0;
+                        val = strtol(tokbuf, &endptr, 0);
+                        if ((errno == ERANGE &&
+                             (val == LONG_MAX || val == LONG_MIN))
+                            || (errno != 0 && val == 0)) {
+                            debug_trace("Error parsing a number.\n");
+                            return -1;
+                        }
+                        if (tokbuf == endptr) {
+                            debug_trace("Not a valid number.\n");
+                            return -1;
+                        }
+                        switch (cursor->type) {
+                            case integer_t:
+                                {
+                                    int tmp = (int) val;
+                                    memcpy(valp, &tmp, sizeof(int));
+                                }
+                                break;
+                            case uinteger_t:
+                                {
+                                    unsigned int tmp = (unsigned int) val;
+                                    memcpy(valp, &tmp, sizeof(unsigned int));
+                                }
+                                break;
+                            case short_t:
+                                {
+                                    short tmp = (short) val;
+                                    memcpy(valp, &tmp, sizeof(short));
+                                }
+                                break;
+                            case ushort_t:
+                                {
+                                    unsigned short tmp = (unsigned short) val;
+                                    memcpy(valp, &tmp, sizeof(unsigned short));
+                                }
+                                break;
+                            case long_t:
+                                memcpy(valp, &val, sizeof(long int));
+                                break;
+                            case ulong_t:
+                                {
+                                    unsigned long tmp = (unsigned long) val;
+                                    memcpy(valp, &tmp, sizeof(unsigned long));
+                                }
+                                break;
+                            default:
+                                ;
+                        }
+                    }
+                    break;
+                case boolean_t:
+                    {
+                        bool tmp = strcmp(tokbuf, "true") == 0;
+                        memcpy(valp, &tmp, sizeof(bool));
+                    }
+                    break;
+                case real_t:
+                    {
+                        char *endptr;
+                        double val;
+                        errno = 0;
+                        val = strtod(tokbuf, &endptr);
+                        if ((errno == ERANGE &&
+                             (val == HUGE_VAL || val == -HUGE_VAL))
+                            || (errno != 0 && val == 0)) {
+                            debug_trace("Error parsing a number.\n");
+                            return -1;
+                        }
+                        if (tokbuf == endptr) {
+                            debug_trace("Not a valid number.\n");
+                            return -1;
+                        }
+                        memcpy(valp, &val, sizeof(double));
+                    }
+                    break;
+                case table_t:
+                default:
+                    ;
                 }
-                break;
-            case integer_t:
-            case uinteger_t:
-            case short_t:
-            case ushort_t:
-            case long_t:
-            case ulong_t:
-                {
-                    char *endptr;
-                    long int val;
-                    errno = 0;
-                    val = strtol(tokbuf, &endptr, 0);
-                    if ((errno == ERANGE &&
-                         (val == LONG_MAX || val == LONG_MIN))
-                        || (errno != 0 && val == 0)) {
-                        debug_trace("Error parsing a number.\n");
-                        return -1;
-                    }
-                    if (tokbuf == endptr) {
-                        debug_trace("Not a valid number.\n");
-                        return -1;
-                    }
-                    switch (cursor->type) {
-                    case integer_t:
-                        *(cursor->addr.integer) = (int) val;
-                        break;
-                    case uinteger_t:
-                        *(cursor->addr.uinteger) = (unsigned int) val;
-                        break;
-                    case short_t:
-                        *(cursor->addr.shortint) = (short) val;
-                        break;
-                    case ushort_t:
-                        *(cursor->addr.ushortint) = (unsigned short) val;
-                        break;
-                    case long_t:
-                        *(cursor->addr.longint) = val;
-                        break;
-                    case ulong_t:
-                        *(cursor->addr.ulongint) = (unsigned long) val;
-                        break;
-                    default:
-                        ;
-                    }
-                }
-                break;
-            case boolean_t:
-                *(cursor->addr.boolean) = strcmp(tokbuf, "true") == 0;
-                break;
-            case real_t:
-                {
-                    char *endptr;
-                    double val;
-                    errno = 0;
-                    val = strtod(tokbuf, &endptr);
-                    if ((errno == ERANGE &&
-                         (val == HUGE_VAL || val == -HUGE_VAL))
-                        || (errno != 0 && val == 0)) {
-                        debug_trace("Error parsing a number.\n");
-                        return -1;
-                    }
-                    if (tokbuf == endptr) {
-                        debug_trace("Not a valid number.\n");
-                        return -1;
-                    }
-                    *(cursor->addr.real) = val;
-                }
-                break;
-            case table_t:
-            default:
-                ;
-            }
             break;
         case LBRACKET: /* key = [ ] */
             if (cursor->type != array_t) {
@@ -413,7 +507,7 @@ static int load_key_value(FILE *fp, const struct toml_key_t *keys,
                 debug_trace("Saw { when not expecting a table.\n");
                 return -1;
             }
-            return load_inline_table(fp, cursor->addr.keys);
+            return load_inline_table(fp, cursor->addr.keys, NULL, 0);
         default:
             debug_trace("Invalid syntax\n");
             return -1;
@@ -422,7 +516,8 @@ static int load_key_value(FILE *fp, const struct toml_key_t *keys,
 }
 
 /* Parses inline tables: { key1 = value1, key2 = value2 } */
-static int load_inline_table(FILE *fp, const struct toml_key_t *keys)
+static int load_inline_table(FILE *fp, const struct toml_key_t *keys,
+                             const struct toml_array_t *array, int offset)
 {
     char tokbuf[TOKBUFSIZ];
     int tok;
@@ -433,7 +528,7 @@ static int load_inline_table(FILE *fp, const struct toml_key_t *keys)
         if (tok == COMMA)
             continue;
         if (tok == STRING || tok == WORD) { /* key/value pairs */
-            if (load_key_value(fp, keys, tokbuf) == -1) {
+            if (load_key_value(fp, tokbuf, keys, array, offset) == -1) {
                 debug_trace("load_key_value() failed: key is '%s'.\n", tokbuf);
                 return -1;
             }
@@ -483,7 +578,7 @@ int toml_load(FILE *fp, const struct toml_key_t *keys)
             break;
         case STRING: /* key/value pairs */
         case WORD:
-            if (load_key_value(fp, curtab, tokbuf) == -1) {
+            if (load_key_value(fp, tokbuf, curtab, NULL, 0) == -1) {
                 debug_trace("load_key_value() failed: key is '%s'.\n", tokbuf);
                 return -1;
             }

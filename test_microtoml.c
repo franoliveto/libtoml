@@ -336,6 +336,50 @@ int test_array_strings(FILE *fp)
     return 0;
 }
 
+int test_array_inline_tables(FILE *fp)
+{
+    struct point {
+        int x, y, z;
+    };
+    struct point points[4];
+    int count;
+    const struct toml_key_t point_keys[] = {
+        {"x", integer_t, TABLEFIELD(struct point, x)},
+        {"y", integer_t, TABLEFIELD(struct point, y)},
+        {"z", integer_t, TABLEFIELD(struct point, z)},
+        {NULL}
+    };
+    const struct toml_key_t root[] = {
+        {"points", array_t, TABLEARRAY(points, point_keys, &count)},
+        {NULL}
+    };
+    int status;
+
+    status = toml_load(fp, root);
+    if (status == -1) {
+        printf("toml_load failed: %d\n", status);
+        return -1;
+    }
+
+    struct point want[] = {
+        {1, 3, 2}, {5, -2, 4},
+        {2, 1, 3}, {-4, 7, -1}
+    };
+    assert_integer("count", 4, count);
+    for (int i = 0; i < 4; i++) {
+        char buf[16];
+
+        snprintf(buf, sizeof(buf), "points[%d].x", i);
+        assert_integer(buf, want[i].x, points[i].x);
+
+        snprintf(buf, sizeof(buf), "points[%d].y", i);
+        assert_integer(buf, want[i].y, points[i].y);
+
+        snprintf(buf, sizeof(buf), "points[%d].z", i);
+        assert_integer(buf, want[i].z, points[i].z);
+    }
+    return 0;
+}
 
 const struct test {
     char *name;
@@ -348,6 +392,7 @@ const struct test {
     {"array_booleans", test_array_booleans},
     {"array_strings", test_array_strings},
     {"inline_tables", test_inline_tables},
+    {"array_inline_tables", test_array_inline_tables},
     {NULL}
 };
 

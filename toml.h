@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdbool.h>
+#include <stddef.h> /* offsetof(3) */
 
 
 enum toml_type {
@@ -22,6 +23,11 @@ enum toml_type {
 struct toml_array_t {
     enum toml_type type;
     union {
+        struct {
+            const struct toml_key_t *subtype;
+            char *base;
+            size_t structsize;
+        } tables;
         struct {
             char **ptrs;
             char *store;
@@ -55,15 +61,17 @@ struct toml_key_t {
         char *string;
         const struct toml_key_t *keys;
         const struct toml_array_t array;
+        size_t offset;
     } addr;
     size_t len;
 };
 
 int toml_load(FILE *fp, const struct toml_key_t *keys);
 
-/* Use the following macro to declare template initializers
-   for arrays of strings. Writing the equivalentes out by
-   hand is error-prone.
+
+/* Use the following macros to declare template initializers
+   for arrays of strings and tables. Writing the equivalentes
+   out by hand is error-prone.
 
    STRINGARRAY takes the base address of an array of
    pointers to char, the base address of the storage,
@@ -76,6 +84,21 @@ int toml_load(FILE *fp, const struct toml_key_t *keys);
     .addr.array.count = n,                          \
     .addr.array.maxlen = (sizeof(p)/sizeof(p[0]))
 
+
+/* TABLEFIELD takes a structure name s, and a fieldname f in s.
+
+  TABLEARRAY takes the base address of an array of structs, an
+  array of template of structures describing the expected shape
+  of the incoming table, and the address of an integer to store
+  the length in. */
+#define TABLEFIELD(s, f) .addr.offset = offsetof(s, f)
+#define TABLEARRAY(a, t, n)                            \
+    .addr.array.type = table_t,                        \
+    .addr.array.arr.tables.subtype = t,                \
+    .addr.array.arr.tables.base = (char *) a,          \
+    .addr.array.arr.tables.structsize = sizeof(a[0]),  \
+    .addr.array.count = n,                             \
+    .addr.array.maxlen = sizeof(a)/sizeof(a[0])
 
 
 #endif /* _MICRO_TOML_H_ */

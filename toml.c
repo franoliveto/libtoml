@@ -1,14 +1,20 @@
-/*
-  US-ASCII characters
-
-  # this is a comment\n
-  key0 = value0\n
-  key1 = value1\n
-  key2 = value2 # this is a comment\n
-  ...
-  keyN = valueN(EOF)
-*/
-
+/* toml.c - parse TOML into fixed-extent data structures.
+ *
+ * This module parses a large subset of TOML (Tom’s Obvious Minimal Language).
+ * Unlike more general TOML parsers, it doesn’t use malloc(3); you need to
+ * give it a set of template structures describing the expected shape of
+ * the incoming TOML, and it will error out if that shape is not matched.
+ * When the parse succeeds, key values will be extracted into static
+ * locations specified in the template structures.
+ *
+ * The dialect it parses has some limitations. First, only ASCII encoded
+ * files are considered to be valid TOML documents. Second, all elements
+ * of an array must be of the same type. Third, arrays may not be array
+ * elements. Fourth, large numbers may not use underscores between digits.
+ *
+ * Copyright (c) 2022, Francisco Oliveto <franciscoliveto@gmail.com>
+ * SPDX-License-Identifier: BSD-2-Clause
+ */
 #include "toml.h"
 
 #include <stdio.h>

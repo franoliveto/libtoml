@@ -1,39 +1,39 @@
-[[channel]]
+[[channels]]
 enable = true
 radio = 0
 if = -400000
 
-[[channel]]
+[[channels]]
 enable = true
 radio = 0
 if = -200000
 
-[[channel]]
-enable = true
+[[channels]]
+enable = false
 radio = 0
 if = 0
 
-[[channel]]
+[[channels]]
 enable = true
 radio = 0
 if = 200000
 
-[[channel]]
-enable = true
+[[channels]]
+enable = false
 radio = 1
 if = -300000
 
-[[channel]]
+[[channels]]
 enable = true
 radio = 1
 if = -100000
 
-[[channel]]
+[[channels]]
 enable = true
 radio = 1
 if = 100000
 
-[[channel]]
-enable = true
+[[channels]]
+enable = false
 radio = 1
 if = 300000

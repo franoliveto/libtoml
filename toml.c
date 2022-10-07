@@ -42,15 +42,17 @@ enum { TOKBUFSIZ = 512 };
 
 /* Token types */
 enum {
-    LBRACKET, /* '[' */
-    RBRACKET, /* ']' */
-    LBRACE,   /* '{' */
-    RBRACE,   /* '}' */
-    EQUAL,    /* '=' */
-    COMMA,    /* ',' */
-    DOT,      /* '.' */
-    WORD,     /* [0-9a-zA-Z+-_.] */
-    STRING    /* "WORD" */
+    LDOUBLEBRACKET, /* "[[" */
+    RDOUBLEBRACKET, /* "]]" */
+    LBRACKET,       /* '[' */
+    RBRACKET,       /* ']' */
+    LBRACE,         /* '{' */
+    RBRACE,         /* '}' */
+    EQUAL,          /* '=' */
+    COMMA,          /* ',' */
+    DOT,            /* '.' */
+    WORD,           /* [0-9a-zA-Z+-_.] */
+    STRING          /* "WORD" */
 };
 
 static int load_inline_table(FILE *fp, const struct toml_key_t *keys,
@@ -68,7 +70,7 @@ static int scan_word(char *buf, size_t size, int c, FILE *fp)
                 return STRING;
             }
             if (valp >= buf + size - 1) {
-                debug_trace("String value too long.");
+                debug_trace("String value too long.\n");
                 return -1;
             }
             *valp++ = c;
@@ -84,7 +86,7 @@ static int scan_word(char *buf, size_t size, int c, FILE *fp)
             (c >= 'A' && c <= 'Z') ||
             (strchr("0123456789+-_.", c) != NULL)) {
             if (valp >= buf + size - 1) {
-                debug_trace("Token value too long.");
+                debug_trace("Token value too long.\n");
                 return -1;
             }
             *valp++ = c;
@@ -115,8 +117,14 @@ static int scan(char *buf, size_t size, FILE *fp)
         case '=':
             return EQUAL;
         case '[':
+            if ((c = getc(fp)) != EOF && c == '[')
+                return LDOUBLEBRACKET;
+            ungetc(c, fp);
             return LBRACKET;
         case ']':
+            if ((c = getc(fp)) != EOF && c == ']')
+                return RDOUBLEBRACKET;
+            ungetc(c, fp);
             return RBRACKET;
         case '{':
             return LBRACE;
@@ -546,10 +554,54 @@ int toml_load(FILE *fp, const struct toml_key_t *keys)
     const struct toml_key_t *cursor;
     char tokbuf[TOKBUFSIZ];
     int tok;
+    int offset = 0;
+    const struct toml_array_t *array = NULL;
+    const char *curkey = NULL;
 
     while ((tok = scan(tokbuf, sizeof(tokbuf), fp)) != -1) {
         switch (tok) {
-        case LBRACKET: /* [table] or [[table]] */
+        case LDOUBLEBRACKET: /* [[table]] */
+            tok = scan(tokbuf, sizeof(tokbuf), fp);
+            if (tok != WORD && tok != STRING) {
+                debug_trace("Invalid syntax.\n");
+                return -1;
+            }
+            debug_trace("Collected table name '%s'\n", tokbuf);
+            for (cursor = keys; cursor->key != NULL; cursor++) {
+                if (strcmp(cursor->key, tokbuf) == 0)
+                    break;
+            }
+            if (cursor->key == NULL) {
+                debug_trace("Unknown table name '%s'\n", tokbuf);
+                return -1;
+            }
+            if (cursor->type != array_t ||
+                cursor->addr.array.type != table_t) {
+                debug_trace("Saw [[ when not expecting an array of tables.\n");
+                return -1;
+            }
+            tok = scan(tokbuf, sizeof(tokbuf), fp);
+            if (tok != RDOUBLEBRACKET) {
+                debug_trace("Missing ]].\n");
+                return -1;
+            }
+            if (curkey == NULL ||
+                strcmp(curkey, cursor->key) != 0) {
+                offset = 0;
+                curkey = cursor->key;
+            } else
+                offset++;
+
+            if (offset >= cursor->addr.array.maxlen) {
+                debug_trace("Too many elements in array.\n");
+                return -1;
+            }
+            curtab = cursor->addr.array.arr.tables.subtype;
+            array = &cursor->addr.array;
+            if (cursor->addr.array.count != NULL)
+                *cursor->addr.array.count = offset + 1;
+            break;
+        case LBRACKET: /* [table] */
             tok = scan(tokbuf, sizeof(tokbuf), fp);
             if (tok != WORD && tok != STRING) {
                 debug_trace("Invalid syntax.\n");
@@ -575,10 +627,12 @@ int toml_load(FILE *fp, const struct toml_key_t *keys)
                 return -1;
             }
             curtab = cursor->addr.keys;
+            array = NULL;
+            offset = 0;
             break;
         case STRING: /* key/value pairs */
         case WORD:
-            if (load_key_value(fp, tokbuf, curtab, NULL, 0) == -1) {
+            if (load_key_value(fp, tokbuf, curtab, array, offset) == -1) {
                 debug_trace("load_key_value() failed: key is '%s'.\n", tokbuf);
                 return -1;
             }

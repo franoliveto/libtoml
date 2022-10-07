@@ -24,10 +24,21 @@ static void assert_boolean(const char *key, bool want, bool got)
     }
 }
 
-static void assert_integer(const char *key, int want, int got)
+static void assert_signed_integer(const char *key, long int want, long int got)
 {
     if (want != got) {
-        printf("'%s' expecting '%d', got '%d'.\n",
+        printf("'%s' expecting '%ld', got '%ld'.\n",
+               key, want, got);
+        exit(EXIT_FAILURE);
+    }
+}
+
+static void assert_unsigned_integer(const char *key,
+                                    unsigned long int want,
+                                    unsigned long int got)
+{
+    if (want != got) {
+        printf("'%s' expecting '%lu', got '%lu'.\n",
                key, want, got);
         exit(EXIT_FAILURE);
     }
@@ -63,7 +74,7 @@ int test_values(FILE *fp)
         return -1;
     }
     assert_string("device", "/dev/spidev0.0", device);
-    assert_integer("count", 4, count);
+    assert_signed_integer("count", 4, count);
     assert_boolean("flag", true, flag);
     assert_real("speed", 76.213, speed);
     return 0;
@@ -84,7 +95,7 @@ int test_tables(FILE *fp)
         } table0;
         struct {
             bool enable;
-            int radio;
+            unsigned short radio;
             int if_freq;
         } table1;
     } toml;
@@ -100,7 +111,7 @@ int test_tables(FILE *fp)
     };
     const struct toml_key_t table1[] = {
         {"enable", boolean_t, .addr.boolean = &toml.table1.enable},
-        {"radio", integer_t, .addr.integer = &toml.table1.radio},
+        {"radio", ushort_t, .addr.ushortint = &toml.table1.radio},
         {"if", integer_t, .addr.integer = &toml.table1.if_freq},
         {NULL}
     };
@@ -122,17 +133,17 @@ int test_tables(FILE *fp)
     }
     assert_string("type", "SPI", toml.type);
     assert_string("device", "/dev/spidev0.0", toml.device);
-    assert_integer("clksrc", 0, toml.clksrc);
+    assert_signed_integer("clksrc", 0, toml.clksrc);
     assert_boolean("lorawan_public", true, toml.lorawan_public);
 
     assert_boolean("table-0.enable", true, toml.table0.enable);
     assert_string("table-0.type", "SX1250", toml.table0.type);
-    assert_integer("table-0.freq", 917200000, toml.table0.freq);
+    assert_signed_integer("table-0.freq", 917200000, toml.table0.freq);
     assert_real("table-0.rssi_offset", -215.4, toml.table0.rssi_offset);
 
     assert_boolean("table-1.enable", true, toml.table1.enable);
-    assert_integer("table-1.radio", 0, toml.table1.radio);
-    assert_integer("table-1.if", -200000, toml.table1.if_freq);
+    assert_unsigned_integer("table-1.radio", 0, toml.table1.radio);
+    assert_signed_integer("table-1.if", -200000, toml.table1.if_freq);
     return 0;
 }
 
@@ -167,8 +178,8 @@ int test_inline_tables(FILE *fp)
     }
     assert_string("name.first", "Ethan", first);
     assert_string("name.last", "Hawke", last);
-    assert_integer("math.point.x", 1, x);
-    assert_integer("math.point.y", 2, y);
+    assert_signed_integer("math.point.x", 1, x);
+    assert_signed_integer("math.point.y", 2, y);
     return 0;
 }
 
@@ -200,16 +211,16 @@ int test_array_integers(FILE *fp)
         printf("toml_load failed: %d\n", status);
         return -1;
     }
-    assert_integer("count1", 3, count1);
-    assert_integer("integers1[0]", 23, integers1[0]);
-    assert_integer("integers1[1]", -12, integers1[1]);
-    assert_integer("integers1[2]", 92, integers1[2]);
+    assert_signed_integer("count1", 3, count1);
+    assert_signed_integer("integers1[0]", 23, integers1[0]);
+    assert_signed_integer("integers1[1]", -12, integers1[1]);
+    assert_signed_integer("integers1[2]", 92, integers1[2]);
 
-    assert_integer("count2", 2, count2);
-    assert_integer("integers2[0]", 3, integers2[0]);
-    assert_integer("integers2[1]", 18, integers2[1]);
+    assert_signed_integer("count2", 2, count2);
+    assert_signed_integer("integers2[0]", 3, integers2[0]);
+    assert_signed_integer("integers2[1]", 18, integers2[1]);
 
-    assert_integer("count3", 0, count3);
+    assert_signed_integer("count3", 0, count3);
     return 0;
 }
 
@@ -241,14 +252,14 @@ int test_array_reals(FILE *fp)
         printf("toml_load failed: %d\n", status);
         return -1;
     }
-    assert_integer("count1", 0, count1);
+    assert_signed_integer("count1", 0, count1);
 
-    assert_integer("count2", 3, count2);
+    assert_signed_integer("count2", 3, count2);
     assert_real("reals2[0]", 23.112, reals2[0]);
     assert_real("reals2[1]", -8.32, reals2[1]);
     assert_real("reals2[2]", 0.72, reals2[2]);
 
-    assert_integer("count3", 3, count3);
+    assert_signed_integer("count3", 3, count3);
     assert_real("reals3[0]", 3.1, reals3[0]);
     assert_real("reals3[1]", -21.0, reals3[1]);
     assert_real("reals3[2]", -0.7, reals3[2]);
@@ -283,7 +294,7 @@ int test_array_booleans(FILE *fp)
         printf("toml_load failed: %d\n", status);
         return -1;
     }
-    assert_integer("count1", 6, count1);
+    assert_signed_integer("count1", 6, count1);
     assert_boolean("booleans1[0]", true, booleans1[0]);
     assert_boolean("booleans1[1]", false, booleans1[1]);
     assert_boolean("booleans1[2]", false, booleans1[2]);
@@ -322,17 +333,17 @@ int test_array_strings(FILE *fp)
         printf("toml_load failed: %d\n", status);
         return -1;
     }
-    assert_integer("count1", 3, count1);
+    assert_signed_integer("count1", 3, count1);
     assert_string("strings1[0]", "one", strings1[0]);
     assert_string("strings1[1]", "two", strings1[1]);
     assert_string("strings1[2]", "three", strings1[2]);
 
-    assert_integer("count2", 3, count2);
+    assert_signed_integer("count2", 3, count2);
     assert_string("strings2[0]", "four", strings2[0]);
     assert_string("strings2[1]", "five", strings2[1]);
     assert_string("strings2[2]", "thisisalongstring", strings2[2]);
 
-    assert_integer("count3", 0, count3);
+    assert_signed_integer("count3", 0, count3);
     return 0;
 }
 
@@ -365,21 +376,144 @@ int test_array_inline_tables(FILE *fp)
         {1, 3, 2}, {5, -2, 4},
         {2, 1, 3}, {-4, 7, -1}
     };
-    assert_integer("count", 4, count);
+    assert_signed_integer("count", 4, count);
     for (int i = 0; i < 4; i++) {
         char buf[16];
 
         snprintf(buf, sizeof(buf), "points[%d].x", i);
-        assert_integer(buf, want[i].x, points[i].x);
+        assert_signed_integer(buf, want[i].x, points[i].x);
 
         snprintf(buf, sizeof(buf), "points[%d].y", i);
-        assert_integer(buf, want[i].y, points[i].y);
+        assert_signed_integer(buf, want[i].y, points[i].y);
 
         snprintf(buf, sizeof(buf), "points[%d].z", i);
-        assert_integer(buf, want[i].z, points[i].z);
+        assert_signed_integer(buf, want[i].z, points[i].z);
     }
     return 0;
 }
+
+int test_array_tables(FILE *fp)
+{
+    enum { NCHANNELS = 8 };
+    struct channel {
+        bool enable;
+        int radio;
+        int if_freq;
+    };
+    struct channel channels[NCHANNELS];
+    int count;
+    const struct toml_key_t chantab[] = {
+        {"enable", boolean_t, .addr.offset = offsetof(struct channel, enable)},
+        {"radio", integer_t, .addr.offset = offsetof(struct channel, radio)},
+        {"if", integer_t, .addr.offset = offsetof(struct channel, if_freq)},
+        {NULL}
+    };
+    const struct toml_key_t root[] = {
+        {"channels", array_t,
+         .addr.array.type = table_t,
+         .addr.array.arr.tables.subtype = chantab,
+         .addr.array.arr.tables.base = (char *) channels,
+         .addr.array.arr.tables.structsize = sizeof(channels[0]),
+         .addr.array.count = &count,
+         .addr.array.maxlen = sizeof(channels)/sizeof(channels[0])},
+        {NULL}
+    };
+    int status;
+
+    status = toml_load(fp, root);
+    if (status == -1) {
+        printf("toml_load failed: %d\n", status);
+        return -1;
+    }
+
+    struct channel want[] = {
+        {true, 0, -400000}, {true, 0, -200000},
+        {false, 0, 0}, {true, 0, 200000},
+        {false, 1, -300000}, {true, 1, -100000},
+        {true, 1, 100000}, {false, 1, 300000}
+    };
+
+    assert_signed_integer("count", NCHANNELS, count);
+
+    for (int i = 0; i < NCHANNELS; i++) {
+        char buf[32];
+
+        snprintf(buf, sizeof(buf), "channels[%d].enable", i);
+        assert_boolean(buf, want[i].enable, channels[i].enable);
+
+        snprintf(buf, sizeof(buf), "channels[%d].radio", i);
+        assert_signed_integer(buf, want[i].radio, channels[i].radio);
+
+        snprintf(buf, sizeof(buf), "channels[%d].if", i);
+        assert_signed_integer(buf, want[i].if_freq, channels[i].if_freq);
+    }
+    return 0;
+}
+
+int test_array_tables_2(FILE *fp)
+{
+    struct product {
+        long sku;
+        char name[16];
+        char color[16];
+    };
+    struct product products[3] = {0};
+    int count;
+    bool enable;
+    int radio, if_freq;
+    const struct toml_key_t chantab[] = {
+        {"enable", boolean_t, .addr.boolean = &enable},
+        {"radio", integer_t, .addr.integer = &radio},
+        {"if", integer_t, .addr.integer = &if_freq},
+        {NULL}
+    };
+    const struct toml_key_t prodtab[] = {
+        {"name", string_t, TABLEFIELD(struct product, name),
+         .len = sizeof(products[0].name)},
+        {"sku", long_t, TABLEFIELD(struct product, sku)},
+        {"color", string_t, TABLEFIELD(struct product, color),
+         .len = sizeof(products[0].color)},
+        {NULL}
+    };
+    const struct toml_key_t root[] = {
+        {"products", array_t, TABLEARRAY(products, prodtab, &count)},
+        {"channel", table_t, .addr.keys = chantab},
+        {NULL}
+    };
+    int status;
+
+    status = toml_load(fp, root);
+    if (status == -1) {
+        printf("toml_load failed: %d\n", status);
+        return -1;
+    }
+
+    struct product want[] = {
+        {738594937, "Hammer", ""},
+        {0, "", ""},
+        {284758393, "Nail", "gray"}
+    };
+
+    assert_signed_integer("count", 3, count);
+
+    for (int i = 0; i < 3; i++) {
+        char buf[32];
+
+        snprintf(buf, sizeof(buf), "products[%d].name", i);
+        assert_string(buf, want[i].name, products[i].name);
+
+        snprintf(buf, sizeof(buf), "products[%d].sku", i);
+        assert_signed_integer(buf, want[i].sku, products[i].sku);
+
+        snprintf(buf, sizeof(buf), "products[%d].color", i);
+        assert_string(buf, want[i].color, products[i].color);
+    }
+    assert_boolean("channel.enable", true, enable);
+    assert_signed_integer("channel.radio", 0, radio);
+    assert_signed_integer("channel.if", -400000, if_freq);
+    return 0;
+}
+
 
 const struct test {
     char *name;
@@ -393,6 +527,8 @@ const struct test {
     {"array_strings", test_array_strings},
     {"inline_tables", test_inline_tables},
     {"array_inline_tables", test_array_inline_tables},
+    {"array_tables", test_array_tables},
+    {"array_tables_2", test_array_tables_2},
     {NULL}
 };
 

@@ -47,11 +47,10 @@ request.
 * Multi-line literal strings.
 * Date-Time type.
 * Escape characters.
-* Array of tables.
 * Dotted keys and tables.
 * Write a reference manual.
 * Example programs.
-* Build a shared library (libmtoml).
+* Build a shared library (libtoml).
 * Add install/uninstall targets to Makefile.
 * Handle error codes (TOML_ERR_xxxx, toml_strerror()).
 

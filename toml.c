@@ -344,6 +344,7 @@ static char *target_address(const struct toml_key_t *cursor,
                 break;
             case boolean_t:
                 addr = (char *) cursor->addr.boolean;
+                break;
             case string_t:
                 addr = cursor->addr.string;
                 break;

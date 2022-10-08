@@ -2,7 +2,7 @@
 
 VERSION = 0.1
 
-CFLAGS = -Wall -Werror
+CFLAGS = -Wall -Werror -Wextra -Wno-missing-field-initializers
 # Add DEBUG_ENABLE for the tracing code
 #CFLAGS += -DDEBUG_ENABLE -g
 

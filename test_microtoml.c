@@ -532,7 +532,7 @@ const struct test {
     {NULL}
 };
 
-int main(int argc, char *argv[])
+int main()
 {
     FILE *fp;
     char file[64];

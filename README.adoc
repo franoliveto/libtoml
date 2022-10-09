@@ -12,8 +12,8 @@ locations specified in the template structures.
 
 The dialect it parses has some limitations. First, only ASCII encoded
 files are considered to be valid TOML documents. Second, all elements
-of an array must be of the same type. Third, arrays may not be array
-elements. Fourth, large numbers may not use underscores between digits.
+of an array must be of the same type. Third, large numbers may not use
+underscores between digits.
 
 To be built, it requires make, a C compiler, and asciidoctor to
 format the documentation.
@@ -42,6 +42,8 @@ request.
 
 === Things to Do
 
+* Nested arrays of integers, reals, booleans, and strings.
+* Nested arrays of tables.
 * Multi-line basic strings.
 * Literal strings.
 * Multi-line literal strings.

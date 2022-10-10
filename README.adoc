@@ -10,9 +10,8 @@ the incoming TOML, and it will error out if that shape is not matched.
 When the parse succeeds, key values will be extracted into static
 locations specified in the template structures.
 
-The dialect it parses has some limitations. First, only ASCII encoded
-files are considered to be valid TOML documents. Second, all elements
-of an array must be of the same type. Third, large numbers may not use
+The dialect it parses has some limitations. First, all elements of an
+array must be of the same type. Second, large numbers may not use
 underscores between digits.
 
 To be built, it requires make, a C compiler, and asciidoctor to
@@ -50,6 +49,7 @@ request.
 * Date-Time type.
 * Escape characters.
 * Dotted keys and tables.
+* TOML files must be a valid UTF-8 encoded Unicode documents.
 * Write a reference manual.
 * Example programs.
 * Build a shared library (libtoml).

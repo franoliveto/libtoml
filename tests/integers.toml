@@ -1,0 +1,12 @@
+int1 = +99
+int2 = 42
+int3 = 0
+int4 = -17
+int5 = 1_000
+int6 = 5_349_221
+int7 = -53_49_221  # Indian number system grouping
+int8 = 1_2_3_4_5  # VALID but discouraged
+int9 = +0
+int10 = -0
+max = 9223372036854775807
+min = -9223372036854775808

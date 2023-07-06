@@ -51,12 +51,12 @@ struct toml_key_t {
     enum toml_type type;
     union {
         int *integer;
-	unsigned int *uinteger;
-	short *shortint;
-	unsigned short *ushortint;
-	long *longint;
-	unsigned long *ulongint;
-	double *real;
+        unsigned int *uinteger;
+        short *shortint;
+        unsigned short *ushortint;
+        long *longint;
+        unsigned long *ulongint;
+        double *real;
         bool *boolean;
         char *string;
         const struct toml_key_t *keys;
@@ -66,7 +66,10 @@ struct toml_key_t {
     size_t len;
 };
 
-int toml_load(FILE *fp, const struct toml_key_t *keys);
+
+int toml_unmarshal(FILE *fp, const struct toml_key_t *keys);
+/* int toml_marshal(); */
+const char *toml_strerror(int errnum);
 
 
 /* Use the following macros to declare template initializers

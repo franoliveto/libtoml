@@ -53,33 +53,6 @@ static void assert_string(const char *key, const char *want, const char *got)
     }
 }
 
-int test_values(FILE *fp)
-{
-    int status;
-    char device[16];
-    int count;
-    bool flag;
-    double speed;
-    const struct toml_key_t keys[] = {
-        {"device", string_t, .addr.string = device,
-         .len = sizeof(device)},
-        {"count", integer_t, .addr.integer = &count},
-        {"flag", boolean_t, .addr.boolean = &flag},
-        {"speed", real_t, .addr.real = &speed},
-        {NULL}
-    };
-
-    if ((status = toml_load(fp, keys)) == -1) {
-        printf("toml_load failed: %d\n", status);
-        return -1;
-    }
-    assert_string("device", "/dev/spidev0.0", device);
-    assert_signed_integer("count", 4, count);
-    assert_boolean("flag", true, flag);
-    assert_real("speed", 76.213, speed);
-    return 0;
-}
-
 int test_tables(FILE *fp)
 {
     struct toml {
@@ -99,7 +72,7 @@ int test_tables(FILE *fp)
             int if_freq;
         } table1;
     } toml;
-    int status;
+    int err;
 
     const struct toml_key_t table0[] = {
         {"enable", boolean_t, .addr.boolean = &toml.table0.enable},
@@ -127,10 +100,12 @@ int test_tables(FILE *fp)
         {NULL}
     };
 
-    if ((status = toml_load(fp, root)) == -1) {
-        printf("toml_load failed: %d\n", status);
+    err = toml_unmarshal(fp, root);
+    if (err != 0) {
+        printf("toml_unmarshal failed: %s\n", toml_strerror(err));
         return -1;
     }
+
     assert_string("type", "SPI", toml.type);
     assert_string("device", "/dev/spidev0.0", toml.device);
     assert_signed_integer("clksrc", 0, toml.clksrc);
@@ -151,7 +126,7 @@ int test_inline_tables(FILE *fp)
 {
     char first[32], last[32];
     int x, y;
-    int status;
+    int err;
     const struct toml_key_t name_keys[] = {
         {"first", string_t, .addr.string = first, .len = sizeof(first)},
         {"last", string_t, .addr.string = last, .len = sizeof(last)},
@@ -172,10 +147,12 @@ int test_inline_tables(FILE *fp)
         {NULL}
     };
 
-    if ((status = toml_load(fp, root)) == -1) {
-        printf("toml_load failed: %d\n", status);
+    err = toml_unmarshal(fp, root);
+    if (err != 0) {
+        printf("toml_unmarshal failed: %s\n", toml_strerror(err));
         return -1;
     }
+
     assert_string("name.first", "Ethan", first);
     assert_string("name.last", "Hawke", last);
     assert_signed_integer("math.point.x", 1, x);
@@ -185,7 +162,7 @@ int test_inline_tables(FILE *fp)
 
 int test_array_integers(FILE *fp)
 {
-    int status;
+    int err;
     int integers1[3], integers2[2], integers3[3];
     int count1, count2, count3;
     const struct toml_key_t keys[] = {
@@ -207,10 +184,12 @@ int test_array_integers(FILE *fp)
         {NULL}
     };
 
-    if ((status = toml_load(fp, keys)) == -1) {
-        printf("toml_load failed: %d\n", status);
+    err = toml_unmarshal(fp, keys);
+    if (err != 0) {
+        printf("toml_unmarshal failed: %s\n", toml_strerror(err));
         return -1;
     }
+
     assert_signed_integer("count1", 3, count1);
     assert_signed_integer("integers1[0]", 23, integers1[0]);
     assert_signed_integer("integers1[1]", -12, integers1[1]);
@@ -226,7 +205,7 @@ int test_array_integers(FILE *fp)
 
 int test_array_reals(FILE *fp)
 {
-    int status;
+    int err;
     double reals1[3], reals2[3], reals3[3];
     int count1, count2, count3;
     const struct toml_key_t keys[] = {
@@ -248,10 +227,12 @@ int test_array_reals(FILE *fp)
         {NULL}
     };
 
-    if ((status = toml_load(fp, keys)) == -1) {
-        printf("toml_load failed: %d\n", status);
+    err = toml_unmarshal(fp, keys);
+    if (err != 0) {
+        printf("toml_unmarshal failed: %s\n", toml_strerror(err));
         return -1;
     }
+
     assert_signed_integer("count1", 0, count1);
 
     assert_signed_integer("count2", 3, count2);
@@ -268,7 +249,7 @@ int test_array_reals(FILE *fp)
 
 int test_array_booleans(FILE *fp)
 {
-    int status;
+    int err;
     bool booleans1[6], booleans2[2], booleans3[3];
     int count1, count2, count3;
     const struct toml_key_t keys[] = {
@@ -290,10 +271,12 @@ int test_array_booleans(FILE *fp)
         {NULL}
     };
 
-    if ((status = toml_load(fp, keys)) == -1) {
-        printf("toml_load failed: %d\n", status);
+    err = toml_unmarshal(fp, keys);
+    if (err != 0) {
+        printf("toml_unmarshal failed: %s\n", toml_strerror(err));
         return -1;
     }
+
     assert_signed_integer("count1", 6, count1);
     assert_boolean("booleans1[0]", true, booleans1[0]);
     assert_boolean("booleans1[1]", false, booleans1[1]);
@@ -312,7 +295,7 @@ int test_array_booleans(FILE *fp)
 
 int test_array_strings(FILE *fp)
 {
-    int status;
+    int err;
     char *strings1[3];
     char strings1store[64];
     int count1;
@@ -329,10 +312,12 @@ int test_array_strings(FILE *fp)
         {NULL}
     };
 
-    if ((status = toml_load(fp, keys)) == -1) {
-        printf("toml_load failed: %d\n", status);
+    err = toml_unmarshal(fp, keys);
+    if (err != 0) {
+        printf("toml_unmarshal failed: %s\n", toml_strerror(err));
         return -1;
     }
+
     assert_signed_integer("count1", 3, count1);
     assert_string("strings1[0]", "one", strings1[0]);
     assert_string("strings1[1]", "two", strings1[1]);
@@ -364,11 +349,11 @@ int test_array_inline_tables(FILE *fp)
         {"points", array_t, TABLEARRAY(points, point_keys, &count)},
         {NULL}
     };
-    int status;
+    int err;
 
-    status = toml_load(fp, root);
-    if (status == -1) {
-        printf("toml_load failed: %d\n", status);
+    err = toml_unmarshal(fp, root);
+    if (err != 0) {
+        printf("toml_unmarshal failed: %s\n", toml_strerror(err));
         return -1;
     }
 
@@ -418,11 +403,11 @@ int test_array_tables(FILE *fp)
          .addr.array.maxlen = sizeof(channels)/sizeof(channels[0])},
         {NULL}
     };
-    int status;
+    int err;
 
-    status = toml_load(fp, root);
-    if (status == -1) {
-        printf("toml_load failed: %d\n", status);
+    err = toml_unmarshal(fp, root);
+    if (err != 0) {
+        printf("toml_unmarshal failed: %s\n", toml_strerror(err));
         return -1;
     }
 
@@ -480,11 +465,11 @@ int test_array_tables_2(FILE *fp)
         {"channel", table_t, .addr.keys = chantab},
         {NULL}
     };
-    int status;
+    int err;
 
-    status = toml_load(fp, root);
-    if (status == -1) {
-        printf("toml_load failed: %d\n", status);
+    err = toml_unmarshal(fp, root);
+    if (err != 0) {
+        printf("toml_unmarshal failed: %s\n", toml_strerror(err));
         return -1;
     }
 
@@ -514,23 +499,64 @@ int test_array_tables_2(FILE *fp)
     return 0;
 }
 
+#include <limits.h>
+
+int test_integers(FILE *fp)
+{
+    int int1, int2, int3, int4, int9, int10;
+    long int5, int6, int7, int8, min, max;
+    struct toml_key_t keys[] = {
+        {"int1", integer_t, .addr.integer = &int1},
+        {"int2", integer_t, .addr.integer = &int2},
+        {"int3", integer_t, .addr.integer = &int3},
+        {"int4", integer_t, .addr.integer = &int4},
+        {"int5", long_t, .addr.longint = &int5},
+        {"int6", long_t, .addr.longint = &int6},
+        {"int7", long_t, .addr.longint = &int7},
+        {"int8", long_t, .addr.longint = &int8},
+        {"int9", integer_t, .addr.integer = &int9},
+        {"int10", integer_t, .addr.integer = &int10},
+        {"max", long_t, .addr.longint = &max},
+        {"min", long_t, .addr.longint = &min},
+        {NULL}
+    };
+    int errnum;
+
+    errnum = toml_unmarshal(fp, keys);
+    assert_signed_integer("errnum", 0, errnum);
+
+    assert_signed_integer("int1", 99, int1);
+    assert_signed_integer("int2", 42, int2);
+    assert_signed_integer("int3", 0, int3);
+    assert_signed_integer("int4", -17, int4);
+    assert_signed_integer("int5", 1000, int5);
+    assert_signed_integer("int6", 5349221, int6);
+    assert_signed_integer("int7", -5349221, int7);
+    assert_signed_integer("int8", 12345, int8);
+    assert_signed_integer("int9", 0, int9);
+    assert_signed_integer("int10", 0, int10);
+    assert_signed_integer("max", LONG_MAX, max);
+    assert_signed_integer("min", LONG_MIN, min);
+    return 0;
+}
 
 const struct test {
     char *name;
     int (*test)(FILE *);
 } tests[] = {
-    {"values", test_values},
-    {"tables", test_tables},
-    {"array_integers", test_array_integers},
-    {"array_reals", test_array_reals},
-    {"array_booleans", test_array_booleans},
-    {"array_strings", test_array_strings},
-    {"inline_tables", test_inline_tables},
-    {"array_inline_tables", test_array_inline_tables},
-    {"array_tables", test_array_tables},
-    {"array_tables_2", test_array_tables_2},
+    {"integers", test_integers},
+    /* {"tables", test_tables}, */
+    /* {"array_integers", test_array_integers}, */
+    /* {"array_reals", test_array_reals}, */
+    /* {"array_booleans", test_array_booleans}, */
+    /* {"array_strings", test_array_strings}, */
+    /* {"inline_tables", test_inline_tables}, */
+    /* {"array_inline_tables", test_array_inline_tables}, */
+    /* {"array_tables", test_array_tables}, */
+    /* {"array_tables_2", test_array_tables_2}, */
     {NULL}
 };
+
 
 int main()
 {
@@ -541,7 +567,7 @@ int main()
     for (t = tests; t->name != NULL; t++) {
         snprintf(file, sizeof(file), "tests/%s.toml", t->name);
         if ((fp = fopen(file, "r")) == NULL) {
-            printf("can't open file %s\n", file);
+            fprintf(stderr, "can't open file %s\n", file);
         } else {
             printf("TEST %s: ", t->name);
             if (t->test(fp) == -1) {

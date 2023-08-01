@@ -2,3 +2,5 @@
 *.o
 *.3
 test_microtoml
+
+bazel-*

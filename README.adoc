@@ -10,49 +10,16 @@ the incoming TOML, and it will error out if that shape is not matched.
 When the parse succeeds, key values will be extracted into static
 locations specified in the template structures.
 
-The dialect it parses has some limitations. First, all elements of an
-array must be of the same type. Second, large numbers may not use
-underscores between digits.
+The dialect it parses has the limitation that all elements of an
+array must be of the same type.
 
-To be built, it requires make, a C compiler, and asciidoctor to
-format the documentation.
+To be built, microtoml requires https://bazel.build[Bazel], a C compiler,
+and asciidoctor to format the documentation.
 
 Building is straightforward. Simply, run:
 
-```
-$ make
-```
-
-To run the tests:
-
-```
-$ make test
+```bash
+$ bazel build //:toml
 ```
 
-== How to Contribute
-
-We'd love to accept contributions to this project. The following is a
-list of the things that need to be done. Most of them are core features,
-but we also need help writing documentation and tests.
-
-Follow the normal process of forking the project, and setup a new branch
-to work in. Finally, push the commits to your fork and submit a merge
-request.
-
-=== Things to Do
-
-* Nested arrays of integers, reals, booleans, and strings.
-* Nested arrays of tables.
-* Multi-line basic strings.
-* Literal strings.
-* Multi-line literal strings.
-* Date-Time type.
-* Escape characters.
-* Dotted keys and tables.
-* TOML files must be a valid UTF-8 encoded Unicode documents.
-* Write a reference manual.
-* Example programs.
-* Build a shared library (libtoml).
-* Add install/uninstall targets to Makefile.
-* Handle error codes (TOML_ERR_xxxx, toml_strerror()).
 

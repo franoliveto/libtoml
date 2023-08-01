@@ -1,0 +1,14 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
+cc_library(
+    name = "toml",
+    srcs = ["toml.c"],
+    hdrs = ["toml.h"],
+    visibility = ["//visibility:public"],
+)
+
+cc_test(
+    name = "test_microtoml",
+    srcs = ["test_microtoml.c"],
+    deps = ["//:toml"],
+)

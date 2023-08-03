@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <limits.h>
 
 #include "toml.h"
 
@@ -499,9 +500,7 @@ int test_array_tables_2(FILE *fp)
     return 0;
 }
 
-#include <limits.h>
-
-int test_integers(FILE *fp)
+void integers_test(FILE *fp)
 {
     int int1, int2, int3, int4, int9, int10;
     long int5, int6, int7, int8, min, max;
@@ -537,14 +536,13 @@ int test_integers(FILE *fp)
     assert_signed_integer("int10", 0, int10);
     assert_signed_integer("max", LONG_MAX, max);
     assert_signed_integer("min", LONG_MIN, min);
-    return 0;
 }
 
 const struct test {
     char *name;
-    int (*test)(FILE *);
+    void (*test)(FILE *);
 } tests[] = {
-    {"integers", test_integers},
+    {"integers", integers_test},
     /* {"tables", test_tables}, */
     /* {"array_integers", test_array_integers}, */
     /* {"array_reals", test_array_reals}, */
@@ -568,14 +566,12 @@ int main()
         snprintf(file, sizeof(file), "tests/%s.toml", t->name);
         if ((fp = fopen(file, "r")) == NULL) {
             fprintf(stderr, "can't open file %s\n", file);
-        } else {
-            printf("TEST %s: ", t->name);
-            if (t->test(fp) == -1) {
-                return EXIT_FAILURE;
-            }
-            puts("ok");
-            fclose(fp);
+            return 1;
         }
+        printf("TEST %s: ", t->name);
+        t->test(fp);
+        puts("ok");
+        fclose(fp);
     }
-    return EXIT_SUCCESS;
+    return 0;
 }

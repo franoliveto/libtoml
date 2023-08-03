@@ -143,6 +143,7 @@ static int lex_scan_literal_string(FILE *fp)
         else
             error_printf("saw EOF before '\''");
     }
+    return -1; // FIXME: what to return in case of error?
 }
 
 /* Consumes an escaped character. */
@@ -165,6 +166,7 @@ static int lex_escape(FILE *fp)
     if (c == '"' || c == '\\')
         return c;
     error_printf("invalid escape sequence '\%c'", c);
+    return -1; // FIXME: what to return in case of error?
 }
 
 /* Scans for multiline literal strings. */
@@ -245,6 +247,7 @@ static int lex_scan_string(FILE *fp)
         else
             error_printf("saw EOF before '\"'");
     }
+    return -1; // FIXME: what to return in case of error?
 }
 
 /* Scans for tokens. */

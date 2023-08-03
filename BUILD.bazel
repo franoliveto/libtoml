@@ -7,8 +7,15 @@ cc_library(
     visibility = ["//visibility:public"],
 )
 
+filegroup(
+    name = "testdata",
+    srcs = glob(["tests/*"]),
+)
+
 cc_test(
-    name = "test_microtoml",
-    srcs = ["test_microtoml.c"],
+    name = "microtoml_test",
+    size = "small",
+    srcs = ["microtoml_test.c"],
+    data = ["testdata"],
     deps = ["//:toml"],
 )

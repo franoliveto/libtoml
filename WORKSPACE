@@ -1,1 +1,1 @@
-workspace(name = "com_gitlab_microtoml")
+workspace(name = "microtoml")

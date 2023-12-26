@@ -10,54 +10,51 @@
  * The dialect it parses has some limitations. First, only ASCII encoded
  * files are considered to be valid TOML documents. Second, all elements
  * of an array must be of the same type. Third, arrays may not be array
- * elements. Fourth, large numbers may not use underscores between digits.
+ * elements.
  *
  * Copyright (c) 2022, Francisco Oliveto <franciscoliveto@gmail.com>
  * SPDX-License-Identifier: BSD-2-Clause
  */
-#include <stdio.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include <string.h>
-#include <stdbool.h>
-#include <stdarg.h>
-#include <limits.h>
-#include <errno.h>
-#include <math.h> /* HUGE_VAL */
-
 #include "toml.h"
 
-/* UTF-8 support: getwc(), ungetwc(), LC_CTYPE */
+#include <ctype.h>
+#include <errno.h>
+#include <limits.h>
+#include <math.h> /* HUGE_VAL */
+#include <stdarg.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+/* TODO: UTF-8 support. */
 
 enum {
-    LBRACKETS,     /* [[ */
-    RBRACKETS,     /* ]] */
-    HEX_INTEGER,   /* 0x[0-9abcdefABCDEF_] */
-    OCT_INTEGER,   /* 0o[0-7_] */
-    BIN_INTEGER,   /* 0b[01_] */
-    INTEGER,       /* [+-0-9_] */
+    LBRACKETS,   /* [[ */
+    RBRACKETS,   /* ]] */
+    HEX_INTEGER, /* 0x[0-9abcdefABCDEF_] */
+    OCT_INTEGER, /* 0o[0-7_] */
+    BIN_INTEGER, /* 0b[01_] */
+    INTEGER,     /* [+-0-9_] */
     FLOAT,
-    BARE_KEY,      /* [A-Za-z0-9-_] */
+    BARE_KEY, /* [A-Za-z0-9-_] */
     STRING,
-    NEWLINE        /* \r, \n, or \r\n */
+    NEWLINE /* \r, \n, or \r\n */
 };
-
 
 const struct toml_key_t *curtab;
 const struct toml_key_t *cursor;
 static FILE *inputfp;
-struct token {
+struct {
     int type;
     char lexeme[BUFSIZ];
-    int pos; /* position of the error, starting at 0 */
+    int pos;  /* position of the error, starting at 0 */
     int line; /* line number, starting at 1 */
 } token;
 
-
 #ifdef DEBUG_ENABLE
 #include <stdarg.h>
-void trace(const char *fmt, ...)
-{
+void print(const char *fmt, ...) {
     char buf[BUFSIZ];
     va_list ap;
     va_start(ap, fmt);
@@ -66,18 +63,19 @@ void trace(const char *fmt, ...)
     fputs(buf, stderr);
 }
 
-#define debug_trace(...) trace(__VA_ARGS__)
+#define log_print(...) print(__VA_ARGS__)
 #else
-#define debug_trace(...) do {} while (0)
+#define log_print(...) \
+    do {               \
+    } while (0)
 #endif
 
-/* Prints error message and exits. */
-void error_printf(const char *fmt, ...)
-{
+void error_printf(const char *fmt, ...) {
     char buf[BUFSIZ];
     va_list ap;
 
-    fprintf(stderr, "syntax error (line %d, column %d): ", token.line, token.pos);
+    fprintf(stderr, "syntax error (line %d, column %d): ", token.line,
+            token.pos);
     va_start(ap, fmt);
     vsnprintf(buf, sizeof(buf), fmt, ap);
     va_end(ap);
@@ -87,11 +85,10 @@ void error_printf(const char *fmt, ...)
 }
 
 /* Checks for and consume \r, \n, \r\n, or EOF */
-static bool endofline(int c, FILE *fp)
-{
+static bool endofline(int c, FILE *fp) {
     bool eol;
 
-    eol = (c=='\r' || c=='\n');
+    eol = (c == '\r' || c == '\n');
     if (c == '\r') {
         c = getc(fp);
         if (c != '\n' && c != EOF)
@@ -101,8 +98,7 @@ static bool endofline(int c, FILE *fp)
 }
 
 /* Returns but does not consume the next character in the input. */
-static int lex_peek(FILE *fp)
-{
+static int lex_peek(FILE *fp) {
     int c;
     c = getc(fp);
     ungetc(c, fp);
@@ -110,23 +106,25 @@ static int lex_peek(FILE *fp)
 }
 
 /* Scans for a number (integer, float) */
-static int lex_scan_number(int c, FILE *fp)
-{
+static int lex_scan_number(int c, FILE *fp) {
+    bool isfloat = false;
     char *p = token.lexeme;
 
     /* FIXME: validate size */
-    for (*p++ = c; isdigit(c = getc(fp)) || c == '_'; ) {
+    *p++ = c;
+    while (isdigit(c = getc(fp)) || c == '_' || c == '.') {
+        if (c == '.')
+            isfloat = true;
         if (c != '_')
             *p++ = c;
     }
     *p = '\0';
     ungetc(c, fp);
-    return INTEGER;
+    return isfloat ? FLOAT : INTEGER;
 }
 
 /* Scans for a literal string. */
-static int lex_scan_literal_string(FILE *fp)
-{
+static int lex_scan_literal_string(FILE *fp) {
     int c;
     char *p = token.lexeme;
 
@@ -143,42 +141,42 @@ static int lex_scan_literal_string(FILE *fp)
         else
             error_printf("saw EOF before '\''");
     }
-    return -1; // FIXME: what to return in case of error?
+    return -1;  // FIXME: what to return in case of error?
 }
 
 /* Consumes an escaped character. */
-static int lex_escape(FILE *fp)
-{
+static int lex_escape(FILE *fp) {
     int c;
 
-    if ((c = getc(fp)) == 'b')
+    switch (c = getc(fp)) {
+    case 'b':
         return '\b';
-    if (c == 'f')
+    case 'f':
         return '\f';
-    if (c == 'n')
+    case 'n':
         return '\n';
-    if (c == 'r')
+    case 'r':
         return '\r';
-    if (c == 't')
+    case 't':
         return '\t';
-    if (c == 'u') {} /* \uXXXX */
-    if (c == 'U') {} /* \UXXXXXXXX */
-    if (c == '"' || c == '\\')
+    case '"':
+    case '\\':
         return c;
+        // case 'u': /* \uXXXX */
+        // case 'U': /* \UXXXXXXXX */
+    }
     error_printf("invalid escape sequence '\%c'", c);
-    return -1; // FIXME: what to return in case of error?
+    return -1;  // FIXME: what to return in case of error?
 }
 
 /* Scans for multiline literal strings. */
-static int lex_scan_ml_literal_string(FILE *fp)
-{
-    (void) fp;
+static int lex_scan_ml_literal_string(FILE *fp) {
+    (void)fp;
     return STRING;
 }
 
 /* Scans for multiline strings. */
-static int lex_scan_ml_string(FILE *fp)
-{
+static int lex_scan_ml_string(FILE *fp) {
     int c;
     char *p = token.lexeme;
 
@@ -190,11 +188,11 @@ static int lex_scan_ml_string(FILE *fp)
         /* the string can contain " and "", including at the end: """str"""""
            6 or more at the end, however, is an error. */
         int n;
-        for (n = 0; (c = getc(fp)) == '"'; )
+        for (n = 0; (c = getc(fp)) == '"';)
             n++;
         if (n == 3 || n == 4 || n == 5) {
             ungetc(c, fp); /* probably \r or \n */
-            if (n == 4) /* one double quote at the end: """" */
+            if (n == 4)    /* one double quote at the end: """" */
                 *p++ = '"';
             else if (n == 5) { /* two double quotes at the end: """"" */
                 *p++ = '"';
@@ -206,8 +204,9 @@ static int lex_scan_ml_string(FILE *fp)
         if (c == EOF)
             error_printf("saw EOF before \"\"\"");
         if (n > 5)
-            error_printf("too many double quotes at the end of "
-                         "multiline string");
+            error_printf(
+                "too many double quotes at the end of "
+                "multiline string");
         for (int i = 0; i < n; i++)
             *p++ = '"';
         if (c == '\\') {
@@ -225,8 +224,7 @@ static int lex_scan_ml_string(FILE *fp)
 }
 
 /* Scans for a basic string. */
-static int lex_scan_string(FILE *fp)
-{
+static int lex_scan_string(FILE *fp) {
     int c;
     char *p = token.lexeme;
 
@@ -247,21 +245,20 @@ static int lex_scan_string(FILE *fp)
         else
             error_printf("saw EOF before '\"'");
     }
-    return -1; // FIXME: what to return in case of error?
+    return -1;  // FIXME: what to return in case of error?
 }
 
-/* Scans for tokens. */
-static int lex_scan(FILE *fp)
-{
+/* lex_scan scans for the next valid token. */
+static int lex_scan(FILE *fp) {
     int c;
 
     while ((c = getc(fp)) != EOF) {
         if (c == ' ' || c == '\t')
             continue;
-        if (c == '#') { /* ignore comments */
-            while ((c = getc(fp)) != EOF && c != '\r' && c != '\n')
+        if (c == '#') { /* ignore comment */
+            while ((c = getc(inputfp)) != EOF && c != '\r' && c != '\n')
                 ;
-            ungetc(c, fp); /* put \r or \n back */
+            ungetc(c, inputfp); /* put \r or \n back */
             continue;
         }
 
@@ -316,23 +313,22 @@ static int lex_scan(FILE *fp)
             *p++ = c;
             c = getc(fp);
             if (c == 'x') { /* hexadecimal */
-                for (*p++ = c; isxdigit(c = getc(fp)) || c == '_'; )
-                    *p++ = c;  /* FIXME: validate size */
+                for (*p++ = c; isxdigit(c = getc(fp)) || c == '_';)
+                    *p++ = c; /* FIXME: validate size */
                 *p = '\0';
                 ungetc(c, fp);
                 return token.type = HEX_INTEGER;
             }
             if (c == 'o') { /* octal */
-                for (*p++ = c; ((c = getc(fp)) >= '0' && c <= '7')
-                         || c == '_'; )
-                    *p++ = c;  /* FIXME: validate size */
+                for (*p++ = c; ((c = getc(fp)) >= '0' && c <= '7') || c == '_';)
+                    *p++ = c; /* FIXME: validate size */
                 *p = '\0';
                 ungetc(c, fp);
                 return token.type = OCT_INTEGER;
             }
             if (c == 'b') { /* binary */
-                for (*p++ = c; (c = getc(fp)) == '0' || c == '1' || c == '_'; )
-                    *p++ = c;  /* FIXME: validate size */
+                for (*p++ = c; (c = getc(fp)) == '0' || c == '1' || c == '_';)
+                    *p++ = c; /* FIXME: validate size */
                 *p = '\0';
                 ungetc(c, fp);
                 return token.type = BIN_INTEGER;
@@ -346,7 +342,7 @@ static int lex_scan(FILE *fp)
             if (isdigit(nextc))
                 return token.type = lex_scan_number(c, fp); /* INTEGER, FLOAT */
             if (nextc == 'i') {
-                (void) getc(fp); /* consume i */
+                (void)getc(fp); /* consume i */
                 if (getc(fp) == 'n') {
                     if (getc(fp) == 'f') {
                         sprintf(token.lexeme, "%cinf", c);
@@ -356,7 +352,7 @@ static int lex_scan(FILE *fp)
                 error_printf("invalid float");
             }
             if (nextc == 'n') {
-                (void) getc(fp); /* consume n */
+                (void)getc(fp); /* consume n */
                 if (getc(fp) == 'a') {
                     if (getc(fp) == 'n') {
                         sprintf(token.lexeme, "%cnan", c);
@@ -372,11 +368,12 @@ static int lex_scan(FILE *fp)
 
         /* keywords: inf, nan, true, false */
 
-        if (isalpha(c)) { /* FIXME: could also start with '-' or '_' or digit. */
+        /* FIXME: could also start with '-' or '_' or digit. */
+        if (isalpha(c)) {
             char *p = token.lexeme;
 
-            for (*p++ = c; isalpha(c = getc(fp))
-                     || isdigit(c) || c == '-' || c == '_'; )
+            for (*p++ = c;
+                 isalpha(c = getc(fp)) || isdigit(c) || c == '-' || c == '_';)
                 *p++ = c; /* FIXME: validate token size */
             *p = '\0';
             ungetc(c, fp);
@@ -396,66 +393,187 @@ static int lex_scan(FILE *fp)
 void keyval();
 
 static char *target_address(const struct toml_key_t *cursor,
-                            const struct toml_array_t *array,
-                            int offset)
-{
+                            const struct toml_array_t *array, int offset) {
     char *addr = NULL;
 
     if (array == NULL) {
         switch (cursor->type) {
-            case integer_t:
-                addr = (char *) cursor->addr.integer;
-                break;
-            case uinteger_t:
-                addr = (char *) cursor->addr.uinteger;
-                break;
-            case long_t:
-                addr = (char *) cursor->addr.longint;
-                break;
-            case ulong_t:
-                addr = (char *) cursor->addr.ulongint;
-                break;
-            case short_t:
-                addr = (char *) cursor->addr.shortint;
-                break;
-            case ushort_t:
-                addr = (char *) cursor->addr.ushortint;
-                break;
-            case real_t:
-                addr = (char *) cursor->addr.real;
-                break;
-            case boolean_t:
-                addr = (char *) cursor->addr.boolean;
-                break;
-            case string_t:
-                addr = cursor->addr.string;
-                break;
-            default:
-                ;
+        case short_t:
+            addr = (char *)cursor->ptr.si;
+            break;
+        case ushort_t:
+            addr = (char *)cursor->ptr.usi;
+            break;
+        case int_t:
+            addr = (char *)cursor->ptr.i;
+            break;
+        case uint_t:
+            addr = (char *)cursor->ptr.ui;
+            break;
+        case long_t:
+            addr = (char *)cursor->ptr.li;
+            break;
+        case ulong_t:
+            addr = (char *)cursor->ptr.uli;
+            break;
+        case real_t:
+            addr = (char *)cursor->ptr.r;
+            break;
+        case bool_t:
+            addr = (char *)cursor->ptr.b;
+            break;
+        case string_t:
+            addr = cursor->ptr.string.s;
+            break;
+        default:
+            break;
         }
-    } else
-        addr = array->arr.tables.base + (offset * array->arr.tables.structsize) +
-                cursor->addr.offset;
-    debug_trace("target address for %s is %p.\n", cursor->key, addr);
+    } else {
+        addr = array->base.tables.base +
+               (offset * array->base.tables.structsize) + cursor->ptr.offset;
+    }
+    log_print("target address for %s is %p.\n", cursor->key, addr);
     return addr;
 }
 
-void value()
-{
-    if (token.type == '[') { /* array = [ ] */
-        do {
-            while (lex_scan(inputfp) == NEWLINE)
-                ;
-            if (token.type == ']') /* end of array */
-                break;
-            value();
-            while (lex_scan(inputfp) == NEWLINE)
-                ;
-        } while (token.type == ',');
+void array() {
+    const struct toml_array_t *array = &cursor->ptr.array;
+    char *sp = array->base.strings.store;
+    int offset = 0;
 
-        if (token.type != ']')
-            error_printf("expected ']'");
+    do {
+        while (lex_scan(inputfp) == NEWLINE)
+            ;
+        if (token.type == ']') /* end of array */
+            break;
+        if (token.type == ',') {
+            log_print("Invalid syntax: got ',' when expecting token.\n");
+            exit(1);
+        }
+        if (offset >= array->cap) {
+            log_print("Too many elements in array.\n");
+            exit(1);
+        }
+
+        switch (token.type) {
+        case STRING: {
+            if (array->type != string_t) {
+                log_print("not expecting a string.\n");
+                exit(1);
+            }
+            array->base.strings.ptrs[offset] = sp;
+            size_t used = sp - array->base.strings.store;
+            size_t free = array->base.strings.storelen - used;
+            size_t len = strlen(token.lexeme);
+            if (len + 1 > free) {
+                log_print("Ran out of storage for strings.\n");
+                exit(1);
+            }
+            memcpy(sp, token.lexeme, len);
+            sp[len] = '\0';
+            sp = sp + len + 1;
+            break;
+        }
+        case INTEGER:
+        case HEX_INTEGER:
+        case OCT_INTEGER:
+        case BIN_INTEGER: {
+            char *endptr;
+            errno = 0;
+            long value = strtol(token.lexeme, &endptr, 0);
+            if (errno != 0 || token.lexeme == endptr) {
+                log_print("Error parsing a number.\n");
+                exit(1);
+            }
+            switch (array->type) {
+            case short_t:
+                array->base.si[offset] = (short int)value;
+                break;
+            case ushort_t:
+                array->base.usi[offset] = (unsigned short int)value;
+                break;
+            case int_t:
+                array->base.i[offset] = (int)value;
+                break;
+            case uint_t:
+                array->base.ui[offset] = (unsigned int)value;
+                break;
+            case long_t:
+                array->base.li[offset] = value;
+                break;
+            case ulong_t:
+                array->base.uli[offset] = (unsigned long int)value;
+                break;
+            default:
+                log_print("not expecting an integer.\n");
+                exit(1);
+            }
+            break;
+        }
+        case FLOAT: {
+            if (array->type != real_t) {
+                log_print("not expecting a float.\n");
+                exit(1);
+            }
+            char *endptr;
+            errno = 0;
+            double value = strtod(token.lexeme, &endptr);
+            if (errno != 0 || token.lexeme == endptr) {
+                log_print("Error parsing a number.\n");
+                exit(1);
+            }
+            array->base.r[offset] = value;
+            break;
+        }
+        case BARE_KEY: {
+            bool value;
+            if (strcmp(token.lexeme, "true") == 0)
+                value = true;
+            else if (strcmp(token.lexeme, "false") == 0)
+                value = false;
+            else {
+                log_print("Got '%s' when expecting boolean.\n", token.lexeme);
+                exit(1);
+            }
+            array->base.b[offset] = value;
+            break;
+        }
+        case '{':  // inline-tables [ { }, { } ]
+            if (cursor->ptr.array.type != table_t) {
+                log_print("Saw { when not expecting inline table.\n");
+                exit(1);
+            }
+            break;
+        }
+        offset++;
+        while (lex_scan(inputfp) == NEWLINE)
+            ;
+    } while (token.type == ',');
+
+    if (token.type != ']')
+        error_printf("expected ']'");
+
+    if (array->len != NULL)
+        *(array->len) = offset;
+}
+
+void value() {
+    if (token.type == '[') { /* array = [ ] */
+        if (cursor->type != array_t) {
+            log_print("Saw [ when not expecting array.\n");
+            // return ERR_UNEXPECTED_ARRAY;
+            exit(1);
+        }
+        // FIXME: handle errors
+        array();
     } else if (token.type == '{') { /* inline-table = { } */
+        if (cursor->type != table_t) {
+            log_print("Saw { when not expecting table.\n");
+            // return ERR_UNEXPECTED_TABLE;
+            exit(1);
+        }
+        // inline_table();
+
         do {
             lex_scan(inputfp); /* FIXME: lex_next()??? */
             if (token.type == BARE_KEY || token.type == STRING)
@@ -466,127 +584,73 @@ void value()
 
         if (token.type != '}')
             error_printf("expected '}'");
-    } else if (token.type == STRING
-             || token.type == INTEGER
-             || token.type == FLOAT
-             || token.type == HEX_INTEGER
-             || token.type == OCT_INTEGER
-             || token.type == BIN_INTEGER
-             || token.type == BARE_KEY) {
-        /* FIXME: validate types */
-        /* if (token.type == STRING && cursor->type != string_t) */
-        /*     error_printf("saw quoted value when expecting non-string"); */
-        /* if (token.type != STRING && cursor->type == string_t) */
-        /*     error_printf("Didn't see quoted value when expecting string"); */
-
+    } else if (token.type == STRING) {
+        if (cursor->type != string_t) {
+            log_print("saw quoted value when expecting non-string\n");
+            exit(1);
+        }
         char *valp = target_address(cursor, NULL, 0);
-        if (valp != NULL)
-            switch (cursor->type) {
-            case string_t:
-            {
-                size_t l = cursor->len;
-                strncpy(valp, token.lexeme, l-1);
-                valp[l-1] = '\0';
-            }
-            break;
-            case integer_t:
-            case uinteger_t:
-            case short_t:
-            case ushort_t:
-            case long_t:
-            case ulong_t:
-            {
-                char *endptr;
-                long int val;
-                errno = 0;
-                val = strtol(token.lexeme, &endptr, 0);
-                if ((errno == ERANGE &&
-                     (val == LONG_MAX || val == LONG_MIN))
-                    || (errno != 0 && val == 0)) {
-                    debug_trace("Error parsing a number.\n");
-                    return;
-                }
-                if (token.lexeme == endptr) {
-                    debug_trace("Not a valid number.\n");
-                    return;
-                }
-                switch (cursor->type) {
-                case integer_t:
-                {
-                    int tmp = (int) val;
-                    memcpy(valp, &tmp, sizeof(int));
-                }
-                break;
-                case uinteger_t:
-                {
-                    unsigned int tmp = (unsigned int) val;
-                    memcpy(valp, &tmp, sizeof(unsigned int));
-                }
-                break;
-                case short_t:
-                {
-                    short tmp = (short) val;
-                    memcpy(valp, &tmp, sizeof(short));
-                }
-                break;
-                case ushort_t:
-                {
-                    unsigned short tmp = (unsigned short) val;
-                    memcpy(valp, &tmp, sizeof(unsigned short));
-                }
-                break;
-                case long_t:
-                    memcpy(valp, &val, sizeof(long int));
-                    break;
-                case ulong_t:
-                {
-                    unsigned long tmp = (unsigned long) val;
-                    memcpy(valp, &tmp, sizeof(unsigned long));
-                }
-                break;
-                default:
-                    ;
-                }
-            }
-            break;
-            case boolean_t:
-            {
-                bool tmp = strcmp(token.lexeme, "true") == 0;
-                memcpy(valp, &tmp, sizeof(bool));
-            }
-            break;
-            case real_t:
-            {
-                char *endptr;
-                double val;
-                errno = 0;
-                val = strtod(token.lexeme, &endptr);
-                if ((errno == ERANGE &&
-                     (val == HUGE_VAL || val == -HUGE_VAL))
-                    || (errno != 0 && val == 0)) {
-                    debug_trace("Error parsing a number.\n");
-                    exit(1);
-                }
-                if (token.lexeme == endptr) {
-                    debug_trace("Not a valid number.\n");
-                    exit(1);
-                }
-                memcpy(valp, &val, sizeof(double));
-            }
-            break;
-            case table_t:
-            default:
-                ;
-            }
-
-    } else
+        if (valp == NULL)
+            return;
+        size_t l = cursor->ptr.string.len;
+        strncpy(valp, token.lexeme, l - 1);
+        valp[l - 1] = '\0';
+    } else if (token.type == FLOAT) {
+        if (cursor->type != real_t) {
+            log_print("saw float value when not expecting a real\n");
+            exit(1);
+        }
+        char *valp = target_address(cursor, NULL, 0);
+        if (valp == NULL)
+            return;
+        char *endptr;
+        errno = 0;
+        double value = strtod(token.lexeme, &endptr);
+        if (errno != 0 || token.lexeme == endptr) {
+            log_print("Error parsing a number.\n");
+            exit(1);
+        }
+        memcpy(valp, &value, sizeof(double));
+    } else if (token.type == INTEGER || token.type == HEX_INTEGER ||
+               token.type == OCT_INTEGER || token.type == BIN_INTEGER) {
+        if (cursor->type != short_t && cursor->type != ushort_t &&
+            cursor->type != int_t && cursor->type != uint_t &&
+            cursor->type != long_t && cursor->type != ulong_t) {
+            log_print("saw integer value when not expecting integers.\n");
+            exit(1);
+        }
+        char *valp = target_address(cursor, NULL, 0);
+        if (valp == NULL)
+            return;
+        char *endptr;
+        errno = 0;
+        long value = strtol(token.lexeme, &endptr, 0);
+        if (errno != 0 || token.lexeme == endptr) {
+            log_print("Not a valid number.\n");
+            return;
+        }
+        memcpy(valp, &value, sizeof(long int));
+    } else if (token.type == BARE_KEY) {
+        char *valp = target_address(cursor, NULL, 0);
+        if (valp == NULL)
+            return;
+        bool value;
+        if (strcmp(token.lexeme, "true") == 0)
+            value = true;
+        else if (strcmp(token.lexeme, "false") == 0)
+            value = false;
+        else {
+            log_print("Got '%s' when expecting boolean.\n", token.lexeme);
+            exit(1);
+        }
+        memcpy(valp, &value, sizeof(bool));
+    } else {
         error_printf("invalid token");
+    }
 }
 
-void key()
-{
+void key() {
     /* simple-key or dotted-key */
-
     for (cursor = curtab; cursor->key != NULL; cursor++) {
         if (strcmp(cursor->key, token.lexeme) == 0)
             break;
@@ -605,8 +669,7 @@ void key()
     }
 }
 
-int accept(int type)
-{
+int accept(int type) {
     if (token.type == type) {
         lex_scan(inputfp);
         return 1;
@@ -614,8 +677,7 @@ int accept(int type)
     return 0;
 }
 
-void keyval()
-{
+void keyval() {
     key();
     if (accept('='))
         value();
@@ -623,8 +685,7 @@ void keyval()
         error_printf("missing '='");
 }
 
-void expression()
-{
+void expression() {
     if (accept(LBRACKETS)) { /* array-table = [[ key ]] */
         if (token.type == BARE_KEY || token.type == STRING) {
             key();
@@ -640,16 +701,17 @@ void expression()
         } else
             error_printf("key was expected");
     } else if (token.type == BARE_KEY || token.type == STRING) { /* key */
+        log_print("key: %s\n", token.lexeme);
         keyval();
     } else {
         error_printf("invalid token");
+        // return ERR_INVALID_TOKEN;
     }
 }
 
-int toml_unmarshal(FILE *fp, const struct toml_key_t *keys)
-{
+int toml_unmarshal(FILE *fp, const struct toml_key_t *tab) {
     inputfp = fp;
-    curtab = keys;
+    curtab = tab;
     token.line = 1;
     while (lex_scan(fp) != EOF) {
         if (token.type == NEWLINE)
@@ -663,9 +725,7 @@ int toml_unmarshal(FILE *fp, const struct toml_key_t *keys)
     return 0;
 }
 
-const char *toml_strerror(int errnum)
-{
-    (void) errnum;
+const char *toml_strerror(int err) {
+    (void)err;
     return "there was an error";
 }
-

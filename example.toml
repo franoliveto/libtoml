@@ -1,0 +1,6 @@
+Age = 25
+Names = ["John", "Paul", "George", "Ringo"]
+Pi = 3.14
+Slots = [6, 28, 496, 8128]
+Description = "The quick brown fox jumps over the lazy dog."
+# DOB = 1987-07-05T05:45:00Z

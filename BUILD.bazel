@@ -1,4 +1,4 @@
-load("@rules_cc//cc:defs.bzl", "cc_library")
+# load("@rules_cc//cc:defs.bzl", "cc_library")
 
 cc_library(
     name = "toml",
@@ -7,9 +7,15 @@ cc_library(
     visibility = ["//visibility:public"],
 )
 
+cc_binary(
+    name = "example",
+    srcs = ["example.c"],
+    deps = ["//:toml"],
+)
+
 filegroup(
     name = "testdata",
-    srcs = glob(["tests/*"]),
+    srcs = glob(["tests/*.toml"]),
 )
 
 cc_test(

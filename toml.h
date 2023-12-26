@@ -1,27 +1,28 @@
 #ifndef _MICRO_TOML_H_
 #define _MICRO_TOML_H_
 
-#include <stdio.h>
 #include <stdbool.h>
 #include <stddef.h> /* offsetof(3) */
-
+#include <stdio.h>
 
 enum toml_type {
     string_t,
-    integer_t,
-    uinteger_t,
-    long_t,
-    ulong_t,
     short_t,
     ushort_t,
-    boolean_t,
+    int_t,
+    uint_t,
+    long_t,
+    ulong_t,
+    bool_t,
     real_t,
     array_t,
-    table_t
+    table_t,
 };
 
 struct toml_array_t {
     enum toml_type type;
+    int *len;
+    int cap;  // the capacity of the array
     union {
         struct {
             const struct toml_key_t *subtype;
@@ -33,60 +34,65 @@ struct toml_array_t {
             char *store;
             int storelen;
         } strings;
-        int *integers;
-        unsigned int *uintegers;
-        short *shortints;
-        unsigned short *ushortints;
-        long *longints;
-        unsigned long *ulongints;
-        double *reals;
-        bool *booleans;
-    } arr;
-    int *count;
-    int maxlen;
+        short int *si;
+        unsigned short int *usi;
+        int *i;
+        unsigned int *ui;
+        long int *li;
+        unsigned long int *uli;
+        double *r;
+        bool *b;
+    } base;
 };
 
 struct toml_key_t {
     const char *key;
     enum toml_type type;
     union {
-        int *integer;
-        unsigned int *uinteger;
-        short *shortint;
-        unsigned short *ushortint;
-        long *longint;
-        unsigned long *ulongint;
-        double *real;
-        bool *boolean;
-        char *string;
+        short int *si;
+        unsigned short int *usi;
+        int *i;
+        unsigned int *ui;
+        long int *li;
+        unsigned long int *uli;
+        double *r;
+        bool *b;
+        struct {
+            char *s;
+            size_t len;
+        } string;
         const struct toml_key_t *keys;
         const struct toml_array_t array;
         size_t offset;
-    } addr;
-    size_t len;
+    } ptr;
 };
 
+/* toml_unmarshal parses the TOML-encoded data of fp and stores
+   the result into static locations specified in the template
+   structure refered by keys. */
+int toml_unmarshal(FILE *fp, const struct toml_key_t *tab);
 
-int toml_unmarshal(FILE *fp, const struct toml_key_t *keys);
 /* int toml_marshal(); */
-const char *toml_strerror(int errnum);
 
+/* toml_strerror returns a pointer to a string that describes
+   the error code err. */
+const char *toml_strerror(int err);
+
+/* toml_cap MACRO returns the capacity of the array a. */
+#define toml_cap(a) (sizeof(a) / sizeof(a[0]))
 
 /* Use the following macros to declare template initializers
    for arrays of strings and tables. Writing the equivalentes
-   out by hand is error-prone.
+   out by hand is error-prone. */
 
-   STRINGARRAY takes the base address of an array of
-   pointers to char, the base address of the storage,
+/* STRINGARRAY takes the base address of an array of pointers to char,
+   the base address of the storage,
    and the address of an integer to store the lenght in. */
-#define STRINGARRAY(p, s, n)                        \
-    .addr.array.type = string_t,                    \
-    .addr.array.arr.strings.ptrs = p,               \
-    .addr.array.arr.strings.store = s,              \
-    .addr.array.arr.strings.storelen = sizeof(s),   \
-    .addr.array.count = n,                          \
-    .addr.array.maxlen = (sizeof(p)/sizeof(p[0]))
-
+#define STRINGARRAY(p, s, n)                                          \
+    .ptr.array.type = string_t, .ptr.array.base.strings.ptrs = p,     \
+    .ptr.array.base.strings.store = s,                                \
+    .ptr.array.base.strings.storelen = sizeof(s), .ptr.array.len = n, \
+    .ptr.array.cap = (sizeof(p) / sizeof(p[0]))
 
 /* TABLEFIELD takes a structure name s, and a fieldname f in s.
 
@@ -94,14 +100,11 @@ const char *toml_strerror(int errnum);
   array of template of structures describing the expected shape
   of the incoming table, and the address of an integer to store
   the length in. */
-#define TABLEFIELD(s, f) .addr.offset = offsetof(s, f)
-#define TABLEARRAY(a, t, n)                            \
-    .addr.array.type = table_t,                        \
-    .addr.array.arr.tables.subtype = t,                \
-    .addr.array.arr.tables.base = (char *) a,          \
-    .addr.array.arr.tables.structsize = sizeof(a[0]),  \
-    .addr.array.count = n,                             \
-    .addr.array.maxlen = sizeof(a)/sizeof(a[0])
-
+#define TABLEFIELD(s, f) .ptr.offset = offsetof(s, f)
+#define TABLEARRAY(a, t, n)                                               \
+    .ptr.array.type = table_t, .ptr.array.arr.tables.subtype = t,         \
+    .ptr.array.base.tables.base = (char *)a,                              \
+    .ptr.array.base.tables.structsize = sizeof(a[0]), .ptr.array.len = n, \
+    .ptr.array.cap = sizeof(a) / sizeof(a[0])
 
 #endif /* _MICRO_TOML_H_ */

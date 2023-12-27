@@ -21,7 +21,8 @@ const struct toml_key_t tab[] = {
     {NULL},
 };
 
-int main() {
+int main()
+{
     const char *filename = "example.toml";
     FILE *fp;
     int err;

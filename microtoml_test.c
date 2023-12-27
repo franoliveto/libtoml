@@ -6,14 +6,16 @@
 
 #include "toml.h"
 
-static void assert_real(const char *key, double want, double got) {
+static void assert_real(const char *key, double want, double got)
+{
     if (want != got) {
         printf("'%s' expecting '%f', got '%f'.\n", key, want, got);
         exit(EXIT_FAILURE);
     }
 }
 
-static void assert_boolean(const char *key, bool want, bool got) {
+static void assert_boolean(const char *key, bool want, bool got)
+{
     if (want != got) {
         printf("'%s' expecting '%s', got '%s'.\n", key, want ? "true" : "false",
                got ? "true" : "false");
@@ -21,8 +23,8 @@ static void assert_boolean(const char *key, bool want, bool got) {
     }
 }
 
-static void assert_signed_integer(const char *key, long int want,
-                                  long int got) {
+static void assert_signed_integer(const char *key, long int want, long int got)
+{
     if (want != got) {
         printf("'%s' expecting '%ld', got '%ld'.\n", key, want, got);
         exit(EXIT_FAILURE);
@@ -30,21 +32,24 @@ static void assert_signed_integer(const char *key, long int want,
 }
 
 static void assert_unsigned_integer(const char *key, unsigned long int want,
-                                    unsigned long int got) {
+                                    unsigned long int got)
+{
     if (want != got) {
         printf("'%s' expecting '%lu', got '%lu'.\n", key, want, got);
         exit(EXIT_FAILURE);
     }
 }
 
-static void assert_string(const char *key, const char *want, const char *got) {
+static void assert_string(const char *key, const char *want, const char *got)
+{
     if (strcmp(got, want)) {
         printf("fail: '%s' expecting '%s', got '%s'.\n", key, want, got);
         exit(EXIT_FAILURE);
     }
 }
 
-int test_tables(FILE *fp) {
+int test_tables(FILE *fp)
+{
     struct toml {
         char type[8];
         char device[16];
@@ -108,7 +113,8 @@ int test_tables(FILE *fp) {
     return 0;
 }
 
-int test_inline_tables(FILE *fp) {
+int test_inline_tables(FILE *fp)
+{
     char first[32], last[32];
     int x, y;
     int err;
@@ -138,7 +144,8 @@ int test_inline_tables(FILE *fp) {
     return 0;
 }
 
-int test_array_integers(FILE *fp) {
+int test_array_integers(FILE *fp)
+{
     int err;
     int integers1[3], integers2[2], integers3[3];
     int count1, count2, count3;
@@ -173,7 +180,8 @@ int test_array_integers(FILE *fp) {
     return 0;
 }
 
-int test_array_reals(FILE *fp) {
+int test_array_reals(FILE *fp)
+{
     int err;
     double reals1[3], reals2[3], reals3[3];
     int count1, count2, count3;
@@ -209,7 +217,8 @@ int test_array_reals(FILE *fp) {
     return 0;
 }
 
-int test_array_booleans(FILE *fp) {
+int test_array_booleans(FILE *fp)
+{
     int err;
     bool booleans1[6], booleans2[2], booleans3[3];
     int count1, count2, count3;
@@ -247,7 +256,8 @@ int test_array_booleans(FILE *fp) {
     return 0;
 }
 
-int test_array_strings(FILE *fp) {
+int test_array_strings(FILE *fp)
+{
     int err;
     char *strings1[3];
     char strings1store[64];
@@ -284,7 +294,8 @@ int test_array_strings(FILE *fp) {
     return 0;
 }
 
-int test_array_inline_tables(FILE *fp) {
+int test_array_inline_tables(FILE *fp)
+{
     struct point {
         int x, y, z;
     };
@@ -322,7 +333,8 @@ int test_array_inline_tables(FILE *fp) {
     return 0;
 }
 
-int test_array_tables(FILE *fp) {
+int test_array_tables(FILE *fp)
+{
     enum { NCHANNELS = 8 };
     struct channel {
         bool enable;
@@ -339,7 +351,7 @@ int test_array_tables(FILE *fp) {
     const struct toml_key_t root[] = {
         {"channels", array_t, .ptr.array.type = table_t,
          .ptr.array.arr.tables.subtype = chantab,
-         .ptr.array.arr.tables.base = (char *)channels,
+         .ptr.array.arr.tables.base = (char *) channels,
          .ptr.array.arr.tables.structsize = sizeof(channels[0]),
          .ptr.array.count = &count,
          .ptr.array.maxlen = sizeof(channels) / sizeof(channels[0])},
@@ -374,7 +386,8 @@ int test_array_tables(FILE *fp) {
     return 0;
 }
 
-int test_array_tables_2(FILE *fp) {
+int test_array_tables_2(FILE *fp)
+{
     struct product {
         long sku;
         char name[16];
@@ -431,7 +444,8 @@ int test_array_tables_2(FILE *fp) {
     return 0;
 }
 
-void integers_test(FILE *fp) {
+void integers_test(FILE *fp)
+{
     int int1, int2, int3, int4, int9, int10;
     long int5, int6, int7, int8, min, max;
     struct toml_key_t keys[] = {{"int1", integer_t, .ptr.integer = &int1},
@@ -481,7 +495,8 @@ const struct test {
              /* {"array_tables_2", test_array_tables_2}, */
              {NULL}};
 
-int main() {
+int main()
+{
     FILE *fp;
     char file[64];
     const struct test *test;

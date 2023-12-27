@@ -103,7 +103,7 @@ const char *toml_strerror(int err);
 #define TABLEFIELD(s, f) .ptr.offset = offsetof(s, f)
 #define TABLEARRAY(a, t, n)                                               \
     .ptr.array.type = table_t, .ptr.array.arr.tables.subtype = t,         \
-    .ptr.array.base.tables.base = (char *)a,                              \
+    .ptr.array.base.tables.base = (char *) a,                             \
     .ptr.array.base.tables.structsize = sizeof(a[0]), .ptr.array.len = n, \
     .ptr.array.cap = sizeof(a) / sizeof(a[0])
 

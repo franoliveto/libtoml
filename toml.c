@@ -54,7 +54,8 @@ struct {
 
 #ifdef DEBUG_ENABLE
 #include <stdarg.h>
-void print(const char *fmt, ...) {
+void print(const char *fmt, ...)
+{
     char buf[BUFSIZ];
     va_list ap;
     va_start(ap, fmt);
@@ -70,7 +71,8 @@ void print(const char *fmt, ...) {
     } while (0)
 #endif
 
-void error_printf(const char *fmt, ...) {
+void error_printf(const char *fmt, ...)
+{
     char buf[BUFSIZ];
     va_list ap;
 
@@ -85,7 +87,8 @@ void error_printf(const char *fmt, ...) {
 }
 
 /* Checks for and consume \r, \n, \r\n, or EOF */
-static bool endofline(int c, FILE *fp) {
+static bool endofline(int c, FILE *fp)
+{
     bool eol;
 
     eol = (c == '\r' || c == '\n');
@@ -98,7 +101,8 @@ static bool endofline(int c, FILE *fp) {
 }
 
 /* Returns but does not consume the next character in the input. */
-static int lex_peek(FILE *fp) {
+static int lex_peek(FILE *fp)
+{
     int c;
     c = getc(fp);
     ungetc(c, fp);
@@ -106,7 +110,8 @@ static int lex_peek(FILE *fp) {
 }
 
 /* Scans for a number (integer, float) */
-static int lex_scan_number(int c, FILE *fp) {
+static int lex_scan_number(int c, FILE *fp)
+{
     bool isfloat = false;
     char *p = token.lexeme;
 
@@ -124,7 +129,8 @@ static int lex_scan_number(int c, FILE *fp) {
 }
 
 /* Scans for a literal string. */
-static int lex_scan_literal_string(FILE *fp) {
+static int lex_scan_literal_string(FILE *fp)
+{
     int c;
     char *p = token.lexeme;
 
@@ -145,7 +151,8 @@ static int lex_scan_literal_string(FILE *fp) {
 }
 
 /* Consumes an escaped character. */
-static int lex_escape(FILE *fp) {
+static int lex_escape(FILE *fp)
+{
     int c;
 
     switch (c = getc(fp)) {
@@ -170,13 +177,15 @@ static int lex_escape(FILE *fp) {
 }
 
 /* Scans for multiline literal strings. */
-static int lex_scan_ml_literal_string(FILE *fp) {
-    (void)fp;
+static int lex_scan_ml_literal_string(FILE *fp)
+{
+    (void) fp;
     return STRING;
 }
 
 /* Scans for multiline strings. */
-static int lex_scan_ml_string(FILE *fp) {
+static int lex_scan_ml_string(FILE *fp)
+{
     int c;
     char *p = token.lexeme;
 
@@ -224,7 +233,8 @@ static int lex_scan_ml_string(FILE *fp) {
 }
 
 /* Scans for a basic string. */
-static int lex_scan_string(FILE *fp) {
+static int lex_scan_string(FILE *fp)
+{
     int c;
     char *p = token.lexeme;
 
@@ -249,7 +259,8 @@ static int lex_scan_string(FILE *fp) {
 }
 
 /* lex_scan scans for the next valid token. */
-static int lex_scan(FILE *fp) {
+static int lex_scan(FILE *fp)
+{
     int c;
 
     while ((c = getc(fp)) != EOF) {
@@ -342,7 +353,7 @@ static int lex_scan(FILE *fp) {
             if (isdigit(nextc))
                 return token.type = lex_scan_number(c, fp); /* INTEGER, FLOAT */
             if (nextc == 'i') {
-                (void)getc(fp); /* consume i */
+                (void) getc(fp); /* consume i */
                 if (getc(fp) == 'n') {
                     if (getc(fp) == 'f') {
                         sprintf(token.lexeme, "%cinf", c);
@@ -352,7 +363,7 @@ static int lex_scan(FILE *fp) {
                 error_printf("invalid float");
             }
             if (nextc == 'n') {
-                (void)getc(fp); /* consume n */
+                (void) getc(fp); /* consume n */
                 if (getc(fp) == 'a') {
                     if (getc(fp) == 'n') {
                         sprintf(token.lexeme, "%cnan", c);
@@ -393,34 +404,35 @@ static int lex_scan(FILE *fp) {
 void keyval();
 
 static char *target_address(const struct toml_key_t *cursor,
-                            const struct toml_array_t *array, int offset) {
+                            const struct toml_array_t *array, int offset)
+{
     char *addr = NULL;
 
     if (array == NULL) {
         switch (cursor->type) {
         case short_t:
-            addr = (char *)cursor->ptr.si;
+            addr = (char *) cursor->ptr.si;
             break;
         case ushort_t:
-            addr = (char *)cursor->ptr.usi;
+            addr = (char *) cursor->ptr.usi;
             break;
         case int_t:
-            addr = (char *)cursor->ptr.i;
+            addr = (char *) cursor->ptr.i;
             break;
         case uint_t:
-            addr = (char *)cursor->ptr.ui;
+            addr = (char *) cursor->ptr.ui;
             break;
         case long_t:
-            addr = (char *)cursor->ptr.li;
+            addr = (char *) cursor->ptr.li;
             break;
         case ulong_t:
-            addr = (char *)cursor->ptr.uli;
+            addr = (char *) cursor->ptr.uli;
             break;
         case real_t:
-            addr = (char *)cursor->ptr.r;
+            addr = (char *) cursor->ptr.r;
             break;
         case bool_t:
-            addr = (char *)cursor->ptr.b;
+            addr = (char *) cursor->ptr.b;
             break;
         case string_t:
             addr = cursor->ptr.string.s;
@@ -436,7 +448,8 @@ static char *target_address(const struct toml_key_t *cursor,
     return addr;
 }
 
-void array() {
+void array()
+{
     const struct toml_array_t *array = &cursor->ptr.array;
     char *sp = array->base.strings.store;
     int offset = 0;
@@ -487,22 +500,22 @@ void array() {
             }
             switch (array->type) {
             case short_t:
-                array->base.si[offset] = (short int)value;
+                array->base.si[offset] = (short int) value;
                 break;
             case ushort_t:
-                array->base.usi[offset] = (unsigned short int)value;
+                array->base.usi[offset] = (unsigned short int) value;
                 break;
             case int_t:
-                array->base.i[offset] = (int)value;
+                array->base.i[offset] = (int) value;
                 break;
             case uint_t:
-                array->base.ui[offset] = (unsigned int)value;
+                array->base.ui[offset] = (unsigned int) value;
                 break;
             case long_t:
                 array->base.li[offset] = value;
                 break;
             case ulong_t:
-                array->base.uli[offset] = (unsigned long int)value;
+                array->base.uli[offset] = (unsigned long int) value;
                 break;
             default:
                 log_print("not expecting an integer.\n");
@@ -557,7 +570,8 @@ void array() {
         *(array->len) = offset;
 }
 
-void value() {
+void value()
+{
     if (token.type == '[') { /* array = [ ] */
         if (cursor->type != array_t) {
             log_print("Saw [ when not expecting array.\n");
@@ -649,7 +663,8 @@ void value() {
     }
 }
 
-void key() {
+void key()
+{
     /* simple-key or dotted-key */
     for (cursor = curtab; cursor->key != NULL; cursor++) {
         if (strcmp(cursor->key, token.lexeme) == 0)
@@ -669,7 +684,8 @@ void key() {
     }
 }
 
-int accept(int type) {
+int accept(int type)
+{
     if (token.type == type) {
         lex_scan(inputfp);
         return 1;
@@ -677,7 +693,8 @@ int accept(int type) {
     return 0;
 }
 
-void keyval() {
+void keyval()
+{
     key();
     if (accept('='))
         value();
@@ -685,7 +702,8 @@ void keyval() {
         error_printf("missing '='");
 }
 
-void expression() {
+void expression()
+{
     if (accept(LBRACKETS)) { /* array-table = [[ key ]] */
         if (token.type == BARE_KEY || token.type == STRING) {
             key();
@@ -709,7 +727,8 @@ void expression() {
     }
 }
 
-int toml_unmarshal(FILE *fp, const struct toml_key_t *tab) {
+int toml_unmarshal(FILE *fp, const struct toml_key_t *tab)
+{
     inputfp = fp;
     curtab = tab;
     token.line = 1;
@@ -725,7 +744,8 @@ int toml_unmarshal(FILE *fp, const struct toml_key_t *tab) {
     return 0;
 }
 
-const char *toml_strerror(int err) {
-    (void)err;
+const char *toml_strerror(int err)
+{
+    (void) err;
     return "there was an error";
 }

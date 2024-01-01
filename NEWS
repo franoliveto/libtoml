@@ -1,15 +1,4 @@
-== microtoml project news
-
-0.1: 2022-10-07
-    Initial release:
-        - Parse key/value pairs (integers, reals, booleans, strings).
-        - Parse inline tables.
-        - Parse tables.
-        - Parse array of tables.
-        - Parse array of inline tables.
-        - Parse array of simple types (integers, reals, booleans, strings).
-        - Unit tests.
-        - CI pipeline.
+== libtoml project news
 
 0.0: 2022-08-06
     Project launched.

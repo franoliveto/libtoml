@@ -1,6 +1,8 @@
+.vscode/
 *.tar.gz
 *.o
 *.3
-test_microtoml
+toml_test
+example
 
 bazel-*

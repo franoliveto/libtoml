@@ -1,4 +1,4 @@
-= This is microtoml's to-do list.
+= This is libtoml's to-do list.
 
 Ideas related to the design, architecture, and feature requirements are
 listed here as well.

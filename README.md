@@ -1,4 +1,4 @@
-== libtoml - a tiny TOML parser library
+# libtoml - a tiny TOML parser library
 
 libtoml is a tiny TOML parser library in C that uses only fixed-extent
 storage.
@@ -15,7 +15,7 @@ files are considered to be valid TOML documents. Second, all elements
 of an array must be of the same type. Third, arrays may not be array
 elements.
 
-To be built, libtoml requires https://bazel.build[Bazel], a C compiler,
+To be built, libtoml requires [Bazel](https://bazel.build), a C compiler,
 and asciidoctor to format the documentation.
 
 Building is straightforward. Simply, run:

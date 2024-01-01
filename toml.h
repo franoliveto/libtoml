@@ -96,10 +96,10 @@ struct toml_key {
   size_t size;
 };
 
-/* toml_unmarshal parses the TOML-encoded data of fp and stores
+/* toml_unmarshal parses the TOML-encoded data of f and stores
    the result into static locations specified in the template
    structure refered to by template. */
-int toml_unmarshal(FILE *fp, const struct toml_key *template);
+int toml_unmarshal(FILE *f, const struct toml_key *template);
 
 /* int toml_marshal(); */
 

@@ -809,9 +809,9 @@ void expression()
   }
 }
 
-int toml_unmarshal(FILE *fp, const struct toml_key *template)
+int toml_unmarshal(FILE *f, const struct toml_key *template)
 {
-  inputfp = fp;
+  inputfp = f;
   curtab = template;
   token.lineno = 1;
   while (lex_scan(fp) != EOF) {

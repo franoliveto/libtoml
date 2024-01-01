@@ -1,10 +1,10 @@
+#include "toml.h"
+
 #include <limits.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "toml.h"
 
 // static void assert_real(const char *key, double want, double got)
 // {
@@ -445,7 +445,7 @@ static void assert_unsigned_integer(const char *key, unsigned long int want,
 //   return 0;
 // }
 
-void integers_test(FILE *fp)
+void integers_test(FILE *f)
 {
   short int1;
   unsigned short int2;
@@ -470,7 +470,7 @@ void integers_test(FILE *fp)
       {NULL}};
   int errnum;
 
-  errnum = toml_unmarshal(fp, template);
+  errnum = toml_unmarshal(f, template);
   assert_signed_integer("errnum", 0, errnum);
 
   assert_signed_integer("int1", 99, int1);
@@ -504,20 +504,20 @@ const struct test {
 
 int main()
 {
-  FILE *fp;
-  char file[64];
+  FILE *f;
+  char filename[64];
   const struct test *test;
 
   for (test = tests; test->name != NULL; test++) {
-    snprintf(file, sizeof(file), "tests/%s.toml", test->name);
-    if ((fp = fopen(file, "r")) == NULL) {
-      fprintf(stderr, "can't open file %s\n", file);
+    snprintf(filename, sizeof(filename), "tests/%s.toml", test->name);
+    if ((f = fopen(filename, "r")) == NULL) {
+      fprintf(stderr, "can't open file %s\n", filename);
       return 1;
     }
     printf("TEST %s: ", test->name);
-    test->func(fp);
+    test->func(f);
     puts("ok");
-    fclose(fp);
+    fclose(f);
   }
   return 0;
 }

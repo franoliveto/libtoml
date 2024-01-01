@@ -1,1 +1,1 @@
-workspace(name = "microtoml")
+workspace(name = "libtoml")

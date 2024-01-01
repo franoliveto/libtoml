@@ -1,8 +1,9 @@
-== microtoml
+== libtoml - a tiny TOML parser library
 
-microtoml is a tiny TOML parser that uses only fixed-extent storage.
+libtoml is a tiny TOML parser library in C that uses only fixed-extent
+storage.
 
-microtoml parses a large subset of TOML (Tom's Obvious Minimal Language).
+libtoml parses a large subset of TOML (Tom's Obvious Minimal Language).
 Unlike more general TOML parsers, it doesn't use malloc(3); you need to
 give it a set of template structures describing the expected shape of
 the incoming TOML, and it will error out if that shape is not matched.
@@ -14,7 +15,7 @@ files are considered to be valid TOML documents. Second, all elements
 of an array must be of the same type. Third, arrays may not be array
 elements.
 
-To be built, microtoml requires https://bazel.build[Bazel], a C compiler,
+To be built, libtoml requires https://bazel.build[Bazel], a C compiler,
 and asciidoctor to format the documentation.
 
 Building is straightforward. Simply, run:

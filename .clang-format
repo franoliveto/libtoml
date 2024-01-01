@@ -3,7 +3,6 @@ BasedOnStyle: Google
 DerivePointerAlignment: false
 PointerAlignment: Right
 IncludeBlocks: Regroup
-IndentWidth: 4
 IndentCaseLabels: false
 AllowShortBlocksOnASingleLine: Empty
 AllowShortFunctionsOnASingleLine: Empty

@@ -3,10 +3,10 @@
 :doctype: manpage
 :date: 06 August 2022
 :email: franciscoliveto@gmail.com.
-:keywords: microtoml
+:keywords: libtoml
 :release-version: 1.0
-:manmanual: Microtoml Manual.
-:mansource: Microtoml {release-version}
+:manmanual: libtoml Manual.
+:mansource: libtoml {release-version}
 
 == NAME
 

@@ -19,9 +19,9 @@ filegroup(
 )
 
 cc_test(
-    name = "microtoml_test",
+    name = "toml_test",
     size = "small",
-    srcs = ["microtoml_test.c"],
+    srcs = ["toml_test.c"],
     data = ["testdata"],
     deps = ["//:toml"],
 )

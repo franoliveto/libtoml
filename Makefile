@@ -1,4 +1,4 @@
-# Makefile for the microtoml library
+# Makefile for the libtoml library
 
 VERSION = 0.0
 
@@ -7,28 +7,28 @@ CFLAGS = -Wall -Werror -Wextra -Wno-missing-field-initializers
 # CFLAGS += -DDEBUG_ENABLE -g
 
 
-all: microtoml_test mtoml.3
+all: example toml_test mtoml.3
 
-microtoml_test: microtoml_test.o toml.o
-	$(CC) $(CFLAGS) -o $@ microtoml_test.o toml.o
+toml_test: toml_test.o toml.o
+	$(CC) $(CFLAGS) -o $@ toml_test.o toml.o
 
 example: example.o toml.o
 	$(CC) $(CFLAGS) -o $@ example.o toml.o
 
 toml.o: toml.c toml.h
-microtoml_test.o: microtoml_test.c
+toml_test.o: toml_test.c
 example.o: example.c
 
 mtoml.3: mtoml.adoc
 	asciidoctor -b manpage $<
 
-test: microtoml_test
-	./microtoml_test
+test: toml_test
+	./toml_test
 
 .PHONY: clean version
 clean:
-	rm -f *.o *.3 microtoml_test example
-	rm -f microtoml-*.tar.gz
+	rm -f *.o *.3 toml_test example
+	rm -f libtoml-*.tar.gz
 
 version:
 	@echo $(VERSION)
@@ -38,7 +38,7 @@ SOURCES = Makefile *.[ch] tests/*.toml BUILD.bazel WORKSPACE example.toml toml.p
 DOCS = COPYING NEWS README.adoc mtoml.adoc
 ALL = $(SOURCES) $(DOCS)
 
-microtoml-$(VERSION).tar.gz: $(ALL)
-	tar --transform='s:^:microtoml-$(VERSION)/:' --show-transformed-names -cvzf microtoml-$(VERSION).tar.gz $(ALL)
+libtoml-$(VERSION).tar.gz: $(ALL)
+	tar --transform='s:^:libtoml-$(VERSION)/:' --show-transformed-names -cvzf libtoml-$(VERSION).tar.gz $(ALL)
 
-dist: microtoml-$(VERSION).tar.gz
+dist: libtoml-$(VERSION).tar.gz

@@ -6,13 +6,13 @@
 int age;
 double pi;
 char *names[4], store[30];
-int nnames;
+int count;
 int slots[6], nslots;
 char sentence[64];
 
 const struct toml_key template[] = {
     {"Age", toml_int_t, .u.integer.i = &age},
-    {"Names", toml_array_t, toml_array_strings(names, store, &nnames)},
+    {"Names", toml_array_t, toml_array_strings(names, store, &count)},
     {"Pi", toml_float_t, .u.real = &pi},
     {"Slots", toml_array_t, .u.array.type = toml_int_t,
      .u.array.u.integer.i = slots, .u.array.count = &nslots,
@@ -39,16 +39,19 @@ int main()
   }
   fclose(f);
 
-  printf("age is %d\n", age);
-  printf("pi is %.2f\n", pi);
-  printf("Slots: ");
+  printf("His sister is %d years old\n", age);
+  printf("The constant pi is approximately equal to %.2f\n", pi);
+  printf("Slots: {");
   for (int i = 0; i < nslots; i++) {
-    printf("%d ", slots[i]);
+    if (i != 0) {
+      fputs(", ", stdout);
+    }
+    printf("%d", slots[i]);
   }
-  putchar('\n');
+  puts("}");
 
   printf("The Beatles are ");
-  for (int i = 0; i < nnames; i++) {
+  for (int i = 0; i < count; i++) {
     if (i != 0) {
       fputs(", ", stdout);
     }

@@ -510,7 +510,8 @@ int main()
 
   for (test = tests; test->name != NULL; test++) {
     snprintf(filename, sizeof(filename), "tests/%s.toml", test->name);
-    if ((f = fopen(filename, "r")) == NULL) {
+    f = fopen(filename, "r");
+    if (f == NULL) {
       fprintf(stderr, "can't open file %s\n", filename);
       return 1;
     }

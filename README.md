@@ -1,6 +1,6 @@
 # libtoml - a TOML parser library. Work-in-progress.
 
-** DO NOT use it in production. It won't work anyway. **
+**DO NOT use it in production. It won't work anyway.**
 
 libtoml is a small TOML parsing library in C that uses only fixed extent
 storage.

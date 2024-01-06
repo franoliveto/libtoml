@@ -37,7 +37,7 @@ A common way to consume libtoml is to use Bazel's external
 dependencies feature. To do this, create a WORKSPACE file in the root
 directory of your Bazel workspace with the following content:
 
-```
+```starlark
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
@@ -54,10 +54,10 @@ is the git commit hash of the libtoml version being used. See the
 [Bazel reference](https://docs.bazel.build/versions/master/repo/http.html#http_archive-sha256)
 for more information.
 
-Now, create a `BUILD` file with a `cc_binary` rule in the same directory
+Now, create a BUILD file with a `cc_binary` rule in the same directory
 as your code:
 
-```
+```starlark
 cc_binary(
     ...
     deps = ["@libtoml//:toml"],

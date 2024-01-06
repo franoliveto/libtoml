@@ -7,7 +7,7 @@ CFLAGS = -Wall -Werror -Wextra -Wno-missing-field-initializers
 # CFLAGS += -DDEBUG_ENABLE -g
 
 
-all: example toml_test mtoml.3
+all: example toml_test # mtoml.3
 
 toml_test: toml_test.o toml.o
 	$(CC) $(CFLAGS) -o $@ toml_test.o toml.o
@@ -19,8 +19,8 @@ toml.o: toml.c toml.h
 toml_test.o: toml_test.c
 example.o: example.c
 
-mtoml.3: mtoml.adoc
-	asciidoctor -b manpage $<
+# mtoml.3: mtoml.adoc
+#	asciidoctor -b manpage $<
 
 test: toml_test
 	./toml_test
@@ -35,7 +35,7 @@ version:
 
 
 SOURCES = Makefile *.[ch] tests/*.toml BUILD.bazel WORKSPACE example.toml toml.png
-DOCS = COPYING NEWS README.adoc mtoml.adoc
+DOCS = COPYING NEWS README.md mtoml.adoc
 ALL = $(SOURCES) $(DOCS)
 
 libtoml-$(VERSION).tar.gz: $(ALL)

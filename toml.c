@@ -814,11 +814,11 @@ int toml_unmarshal(FILE *f, const struct toml_key *template)
   inputfp = f;
   curtab = template;
   token.lineno = 1;
-  while (lex_scan(fp) != EOF) {
+  while (lex_scan(inputfp) != EOF) {
     if (token.type == NEWLINE)
       continue;
     expression();
-    if (lex_scan(fp) == EOF)
+    if (lex_scan(inputfp) == EOF)
       break;
     if (token.type != NEWLINE)
       error_printf("expected newline");

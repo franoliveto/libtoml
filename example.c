@@ -21,8 +21,7 @@ const struct toml_key template[] = {
     {NULL},
 };
 
-int main()
-{
+int main() {
   const char *filename = "example.toml";
   FILE *f;
   int errnum;

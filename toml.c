@@ -53,8 +53,7 @@ struct {
 
 #ifdef DEBUG_ENABLE
 #include <stdarg.h>
-void print(const char *fmt, ...)
-{
+void print(const char *fmt, ...) {
   char buf[BUFSIZ];
   va_list ap;
   va_start(ap, fmt);
@@ -70,8 +69,7 @@ void print(const char *fmt, ...)
   } while (0)
 #endif
 
-void error_printf(const char *fmt, ...)
-{
+void error_printf(const char *fmt, ...) {
   char buf[BUFSIZ];
   va_list ap;
 
@@ -86,8 +84,7 @@ void error_printf(const char *fmt, ...)
 }
 
 /* Checks for and consume \r, \n, \r\n, or EOF */
-static bool endofline(int c, FILE *fp)
-{
+static bool endofline(int c, FILE *fp) {
   bool eol;
 
   eol = (c == '\r' || c == '\n');
@@ -100,8 +97,7 @@ static bool endofline(int c, FILE *fp)
 }
 
 /* Returns but does not consume the next character in the input. */
-static int lex_peek(FILE *fp)
-{
+static int lex_peek(FILE *fp) {
   int c;
   c = getc(fp);
   ungetc(c, fp);
@@ -109,8 +105,7 @@ static int lex_peek(FILE *fp)
 }
 
 /* Scans for a number (integer, float) */
-static int lex_scan_number(int c, FILE *fp)
-{
+static int lex_scan_number(int c, FILE *fp) {
   bool isfloat = false;
   char *p = token.lexeme;
 
@@ -128,8 +123,7 @@ static int lex_scan_number(int c, FILE *fp)
 }
 
 /* Scans for a literal string. */
-static int lex_scan_literal_string(FILE *fp)
-{
+static int lex_scan_literal_string(FILE *fp) {
   int c;
   char *p = token.lexeme;
 
@@ -150,8 +144,7 @@ static int lex_scan_literal_string(FILE *fp)
 }
 
 /* Consumes an escaped character. */
-static int lex_escape(FILE *fp)
-{
+static int lex_escape(FILE *fp) {
   int c;
 
   switch (c = getc(fp)) {
@@ -177,15 +170,13 @@ static int lex_escape(FILE *fp)
 }
 
 /* Scans for multiline literal strings. */
-static int lex_scan_ml_literal_string(FILE *fp)
-{
+static int lex_scan_ml_literal_string(FILE *fp) {
   (void) fp;
   return STRING;
 }
 
 /* Scans for multiline strings. */
-static int lex_scan_ml_string(FILE *fp)
-{
+static int lex_scan_ml_string(FILE *fp) {
   int c;
   char *p = token.lexeme;
 
@@ -233,8 +224,7 @@ static int lex_scan_ml_string(FILE *fp)
 }
 
 /* Scans for a basic string. */
-static int lex_scan_string(FILE *fp)
-{
+static int lex_scan_string(FILE *fp) {
   int c;
   char *p = token.lexeme;
 
@@ -259,8 +249,7 @@ static int lex_scan_string(FILE *fp)
 }
 
 /* lex_scan scans for the next valid token. */
-static int lex_scan(FILE *fp)
-{
+static int lex_scan(FILE *fp) {
   int c;
 
   while ((c = getc(fp)) != EOF) {
@@ -404,8 +393,7 @@ static int lex_scan(FILE *fp)
 void keyval();
 
 static char *target_address(const struct toml_key *cursor,
-                            const struct toml_array *array, int offset)
-{
+                            const struct toml_array *array, int offset) {
   char *addr = NULL;
 
   if (array == NULL) {
@@ -448,8 +436,7 @@ static char *target_address(const struct toml_key *cursor,
   return addr;
 }
 
-static void array()
-{
+static void array() {
   const struct toml_array *array = &cursor->u.array;
   char *sp = array->u.strings.store;
   size_t offset = 0;
@@ -582,8 +569,7 @@ static void array()
     *(array->count) = offset;
 }
 
-void inline_table()
-{
+void inline_table() {
   do {
     lex_scan(inputfp); /* FIXME: lex_next()??? */
     if (token.type == BARE_KEY || token.type == STRING)
@@ -596,8 +582,7 @@ void inline_table()
     error_printf("expected '}'");
 }
 
-void value()
-{
+void value() {
   switch (token.type) {
   case '[':
     if (cursor->type != toml_array_t) {
@@ -733,8 +718,7 @@ void value()
   }
 }
 
-void key()
-{
+void key() {
   /* simple-key or dotted-key */
   for (cursor = curtab; cursor->name != NULL; cursor++) {
     if (strcmp(cursor->name, token.lexeme) == 0)
@@ -754,8 +738,7 @@ void key()
   }
 }
 
-int accept(int type)
-{
+int accept(int type) {
   if (token.type == type) {
     lex_scan(inputfp);
     return 1;
@@ -763,8 +746,7 @@ int accept(int type)
   return 0;
 }
 
-void keyval()
-{
+void keyval() {
   key();
   if (accept('='))
     value();
@@ -772,8 +754,7 @@ void keyval()
     error_printf("missing '='");
 }
 
-void expression()
-{
+void expression() {
   /* array-table = [[ key ]] */
   if (accept(LBRACKETS)) {
     switch (token.type) {
@@ -809,8 +790,7 @@ void expression()
   }
 }
 
-int toml_unmarshal(FILE *f, const struct toml_key *template)
-{
+int toml_unmarshal(FILE *f, const struct toml_key *template) {
   inputfp = f;
   curtab = template;
   token.lineno = 1;
@@ -826,8 +806,7 @@ int toml_unmarshal(FILE *f, const struct toml_key *template)
   return 0;
 }
 
-const char *toml_strerror(int errnum)
-{
+const char *toml_strerror(int errnum) {
   (void) errnum;
   return "there was an error";
 }

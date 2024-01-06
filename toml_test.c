@@ -23,8 +23,8 @@
 //   }
 // }
 
-static void assert_signed_integer(const char *key, long int want, long int got)
-{
+static void assert_signed_integer(const char *key, long int want,
+                                  long int got) {
   if (want != got) {
     printf("'%s' expecting '%ld', got '%ld'.\n", key, want, got);
     exit(EXIT_FAILURE);
@@ -32,8 +32,7 @@ static void assert_signed_integer(const char *key, long int want, long int got)
 }
 
 static void assert_unsigned_integer(const char *key, unsigned long int want,
-                                    unsigned long int got)
-{
+                                    unsigned long int got) {
   if (want != got) {
     printf("'%s' expecting '%lu', got '%lu'.\n", key, want, got);
     exit(EXIT_FAILURE);
@@ -445,8 +444,7 @@ static void assert_unsigned_integer(const char *key, unsigned long int want,
 //   return 0;
 // }
 
-void integers_test(FILE *f)
-{
+void integers_test(FILE *f) {
   short int1;
   unsigned short int2;
   unsigned int int3;
@@ -502,8 +500,7 @@ const struct test {
              /* {"array_tables_2", test_array_tables_2}, */
              {NULL}};
 
-int main()
-{
+int main() {
   FILE *f;
   char filename[64];
   const struct test *test;

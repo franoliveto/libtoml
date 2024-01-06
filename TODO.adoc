@@ -1,8 +1,0 @@
-= This is libtoml's to-do list.
-
-Ideas related to the design, architecture, and feature requirements are
-listed here as well.
-
-(Please, describe each entry as much and clearly as possible.)
-
-* Add license to source and header files.

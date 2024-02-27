@@ -5,14 +5,16 @@
 
 int age;
 double pi;
-char *names[4], store[30];
-int count;
+char *names[4];
+char names_store[30];
+int names_count;
 int slots[6], nslots;
 char sentence[64];
 
 const struct toml_key template[] = {
     {"Age", toml_int_t, .u.integer.i = &age},
-    {"Names", toml_array_t, toml_array_strings(names, store, &count)},
+    {"Names", toml_array_t,
+     toml_array_strings(names, names_store, &names_count)},
     {"Pi", toml_float_t, .u.real = &pi},
     {"Slots", toml_array_t, .u.array.type = toml_int_t,
      .u.array.u.integer.i = slots, .u.array.count = &nslots,

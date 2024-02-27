@@ -60,7 +60,6 @@ struct toml_array {
 struct toml_key {
   /* The name of the key. */
   const char *name;
-
   /* The type of the value stored in the field u. */
   enum toml_type type;
 
@@ -91,7 +90,6 @@ struct toml_key {
     const struct toml_array array;
     size_t offset;
   } u;
-
   /* The size of the array of characters pointed to by string. */
   size_t size;
 };

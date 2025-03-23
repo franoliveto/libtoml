@@ -1,5 +1,0 @@
-build --copt=-Werror
-build --copt=-Wextra
-build --copt=-Wno-missing-field-initializers
-build --noenable_bzlmod
-

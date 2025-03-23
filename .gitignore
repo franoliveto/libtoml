@@ -1,8 +1,5 @@
-.vscode/
 *.tar.gz
 *.o
-*.3
 toml_test
 example
-
-bazel-*
+lex_test

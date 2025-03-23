@@ -3,6 +3,4 @@
 # first = "Ethan"
 # last = "Hawke"
 name = { first = "Ethan", last = "Hawke" }
-
-[math]
 point = { x = 1, y = 2 }

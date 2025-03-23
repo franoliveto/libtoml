@@ -7,35 +7,38 @@ CFLAGS = -Wall -Werror -Wextra -Wno-missing-field-initializers
 # CFLAGS += -DDEBUG_ENABLE -g
 
 
-all: example toml_test # mtoml.3
+all: example
 
-toml_test: toml_test.o toml.o
-	$(CC) $(CFLAGS) -o $@ toml_test.o toml.o
+lex_test: lex_test.o lex.o
+	$(CC) $(CFLAGS) -o $@ lex_test.o lex.o
 
-example: example.o toml.o
-	$(CC) $(CFLAGS) -o $@ example.o toml.o
+toml_test: toml_test.o toml.o lex.o
+	$(CC) $(CFLAGS) -o $@ toml_test.o toml.o lex.o
+
+example: example.o toml.o lex.o
+	$(CC) $(CFLAGS) -o $@ example.o toml.o lex.o
 
 toml.o: toml.c toml.h
 toml_test.o: toml_test.c
 example.o: example.c
+lex.o: lex.c lex.h
+lex_test.o: lex_test.c
 
-# mtoml.3: mtoml.adoc
-#	asciidoctor -b manpage $<
-
-test: toml_test
+test: lex_test toml_test
+	./lex_test
 	./toml_test
 
 .PHONY: clean version
 clean:
-	rm -f *.o *.3 toml_test example
+	rm -f *.o lex_test toml_test example
 	rm -f libtoml-*.tar.gz
 
 version:
 	@echo $(VERSION)
 
 
-SOURCES = Makefile *.[ch] tests/*.toml BUILD.bazel WORKSPACE example.toml toml.png
-DOCS = COPYING NEWS README.md mtoml.adoc
+SOURCES = Makefile *.[ch] example.toml toml.png
+DOCS = LICENSE NEWS README.md
 ALL = $(SOURCES) $(DOCS)
 
 libtoml-$(VERSION).tar.gz: $(ALL)

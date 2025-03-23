@@ -56,7 +56,7 @@ struct toml_array {
   } u;
 };
 
-/* The representation of a key/value pair. */
+/* The representation of a single key/value pair. */
 struct toml_key {
   /* The name of the key. */
   const char *name;
@@ -64,29 +64,29 @@ struct toml_key {
   enum toml_type type;
 
   union {
-    /* TOML_TYPE_STRING */
+    /* toml_string_t */
     char *string;
-    /* TOML_TYPE_FLOAT */
+    /* toml_float_t */
     double *real;
-    /* TOML_TYPE_BOOL */
+    /* toml_bool_t */
     bool *boolean;
     union {
-      /* TOML_TYPE_SHORT */
+      /* toml_short_t */
       short *s;
-      /* TOML_TYPE_USHORT */
+      /* toml_ushort_t */
       unsigned short *us;
-      /* TOML_TYPE_INT */
+      /* toml_int_t */
       int *i;
-      /* TOML_TYPE_UINT */
+      /* toml_uint_t */
       unsigned int *ui;
-      /* TOML_TYPE_LONG */
+      /* toml_long_t */
       long *l;
-      /* TOML_TYPE_ULONG */
+      /* toml_ulong_t */
       unsigned long *ul;
     } integer;
-    /* TOML_TYPE_TABLE */
+    /* toml_table_t */
     const struct toml_key *table;
-    /* TOML_TYPE_ARRAY */
+    /* toml_array_t */
     const struct toml_array array;
     size_t offset;
   } u;
@@ -97,13 +97,15 @@ struct toml_key {
 /* toml_unmarshal parses the TOML-encoded data of f and stores
    the result into static locations specified in the template
    structure refered to by template. */
-int toml_unmarshal(FILE *f, const struct toml_key *template);
+// int toml_unmarshal(FILE *f, const struct toml_key *template);
 
-/* int toml_marshal(); */
+/* toml_unmarshal parses TOML-encoded text and stores the result into
+   static locations specified in the set of template structures templ. */
+int toml_unmarshal(const char *text, const struct toml_key *templ);
 
 /* toml_strerror returns a pointer to a string that describes
-   the error code errnum. */
-const char *toml_strerror(int errnum);
+   the last error. */
+const char *toml_strerror();
 
 /* toml_len returns the capacity of the array a. */
 #define toml_len(a) (sizeof(a) / sizeof(a[0]))
@@ -124,13 +126,13 @@ const char *toml_strerror(int errnum);
    an array of template of structures describing the expected
    shape of the incoming table, and the address of an integer
    to store the length in. */
-#define toml_array_tables(a, t, n)                               \
-  .u.array.type = toml_table_t, .u.array.u.tables.subtype = t,   \
-  .u.array.u.tables.base = (char *) a,                           \
-  .u.array.u.tables.structsize = sizeof(a[0]), .u.array.len = n, \
-  .u.array.cap = (sizeof(a) / sizeof(a[0]))
+#define toml_array_tables(a, t, n)                                 \
+  .u.array.type = toml_table_t, .u.array.u.tables.subtype = t,     \
+  .u.array.u.tables.base = (char *) a,                             \
+  .u.array.u.tables.structsize = sizeof(a[0]), .u.array.count = n, \
+  .u.array.len = (sizeof(a) / sizeof(a[0]))
 
-/* toml_table_field takes a structure name s, and a fieldname
+/* toml_table_field takes a structure name s, and a field name
    f in s. */
 #define toml_table_field(s, f) .u.offset = offsetof(s, f)
 

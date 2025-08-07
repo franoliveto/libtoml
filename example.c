@@ -10,6 +10,7 @@ double pi;
 // int names_count;
 // int slots[6], nslots;
 char sentence[64];
+int a;
 
 const struct toml_key template[] = {
     {"Age", toml_int_t, .u.integer.i = &age},
